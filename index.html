@@ -202,7 +202,7 @@ $('connect').addEventListener('click',async()=>{
   return;
  }
  button.disabled=true;
- button.textContent='Готовим профиль Karing…';
+ button.textContent='Готовим файл WireGuard…';
  $('message').textContent='Проверяем доступ и создаём персональный WireGuard-профиль.';
  try{
   const response=await fetch(API_BASE+'/api/wireguard/iphone',{
@@ -216,10 +216,10 @@ $('connect').addEventListener('click',async()=>{
   if(!response.ok)throw new Error(result.error||'Не удалось выдать конфигурацию.');
   $('vpnStatus').textContent='Файл отправлен в Telegram';
   $('vpnStatus').classList.remove('warning');
-  $('message').textContent=result.message||'Проверь личный чат этого бота — там будет файл Averiq-Karing.conf для импорта в Karing.';
+  $('message').textContent=result.message||'Проверь личный чат этого бота — там будет файл Averiq-WireGuard.conf для импорта в WireGuard.';
   if(tg?.HapticFeedback)tg.HapticFeedback.notificationOccurred('success');
-  if(tg?.showAlert)tg.showAlert('Готово! Открой присланный файл Averiq-Karing.conf на iPhone и импортируй его в Karing.');
-  else toast('Конфиг отправлен в Telegram.');
+  if(tg?.showAlert)tg.showAlert('Готово! Открой присланный файл Averiq-WireGuard.conf и импортируй его в WireGuard.');
+  else toast('Файл WireGuard отправлен в Telegram.');
  }catch(error){
   const msg=error?.message||'Не удалось подключиться к серверу.';
   $('message').textContent=msg;
