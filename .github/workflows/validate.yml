@@ -1,0 +1,25 @@
+name: Validate Averiq VPN
+on:
+  push:
+    paths:
+      - "backend/**"
+      - "index.html"
+      - ".github/workflows/validate.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - "index.html"
+      - ".github/workflows/validate.yml"
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Compile Python API
+        run: python -m py_compile backend/app.py
+      - name: Check deployment script
+        run: bash -n backend/deploy.sh
