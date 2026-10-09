@@ -251,11 +251,11 @@ def send_config_to_telegram(user_id, config_text):
         (
             f"--{boundary}\r\n"
             'Content-Disposition: form-data; name="caption"\r\n\r\n'
-            "Твой персональный Averiq VPN. На iPhone открой файл и импортируй WireGuard-конфигурацию в Karing.\r\n"
+            "Твой персональный Averiq VPN для WireGuard. Сохрани файл и импортируй его в приложение WireGuard.\r\n"
         ).encode("utf-8"),
         (
             f"--{boundary}\r\n"
-            'Content-Disposition: form-data; name="document"; filename="Averiq-Karing.conf"\r\n'
+            'Content-Disposition: form-data; name="document"; filename="Averiq-WireGuard.conf"\r\n'
             "Content-Type: application/octet-stream\r\n\r\n"
         ).encode("utf-8"),
         config_text.encode("utf-8"),
@@ -345,7 +345,7 @@ class Handler(BaseHTTPRequestHandler):
             send_config_to_telegram(user_id, config)
             self.write_json(200, {
                 "ok": True,
-                "message": "Готово! Персональный файл Averiq-Karing.conf отправлен в чат этого бота. Открой файл на iPhone и выбери WireGuard."
+                "message": "Готово! Файл Averiq-WireGuard.conf отправлен в чат этого бота. Открой WireGuard и импортируй файл."
             }, origin)
         except ApiError as exc:
             self.write_json(exc.status, {"error": str(exc)}, origin)
