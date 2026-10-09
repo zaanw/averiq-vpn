@@ -259,7 +259,27 @@ $('pay').addEventListener('click',async()=>{
 $('support').addEventListener('click',()=>{
  if(tg)tg.openTelegramLink('https://t.me/');else toast('Открой приложение внутри Telegram, чтобы использовать функции Mini App.');
 });
+async function refreshSubscriptionStatus(){
+ if(!API_BASE||!tg?.initData)return;
+ try{
+  const response=await fetch(API_BASE+'/api/subscription/status',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   cache:'no-store',
+   body:JSON.stringify({initData:tg.initData})
+  });
+  if(!response.ok)return;
+  const result=await response.json();
+  if(result.active&&result.expiresAt){
+   $('subscriptionStatus').textContent='Активна до '+new Date(result.expiresAt*1000).toLocaleDateString('ru-RU');
+   $('subscriptionStatus').classList.remove('warning');
+   $('pay').textContent='Продлить на 30 дней — 499 ₽ через СБП';
+   $('message').textContent='Подписка активна. Персональная ссылка также доступна в личном чате этого бота.';
+  }
+ }catch(_){}
+}
 updateUI();
+refreshSubscriptionStatus();
 </script>
 </body>
 </html>
