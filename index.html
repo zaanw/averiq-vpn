@@ -20,6 +20,10 @@ button{cursor:pointer}
 .brand-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:15px;background:linear-gradient(145deg,#a99cff,#6d5af4 62%,#46dacc);box-shadow:0 8px 28px #7664ff3b;color:#0a0b17;font-size:23px;font-weight:950}
 .brand em{font-style:normal;color:#a99aff}
 .status-pill{display:flex;align-items:center;gap:7px;border:1px solid #29423e;background:#12221f;color:#a8e9c8;padding:8px 10px;border-radius:30px;font-size:10px;font-weight:750;white-space:nowrap}
+.client-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.client-option{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:12px;padding:13px 10px;font-weight:800}
+.client-option.selected{border-color:var(--purple);background:#292344;box-shadow:inset 0 0 0 1px var(--purple)}
+.client-option:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .status-dot{width:6px;height:6px;border-radius:50%;background:#e9bb75;box-shadow:0 0 10px #e9bb7570}
 .hero{padding:31px 0 25px}
 .eyebrow{display:inline-flex;align-items:center;gap:7px;color:#b6adff;font-size:10px;font-weight:850;letter-spacing:1.7px;text-transform:uppercase}
@@ -146,6 +150,14 @@ button{cursor:pointer}
     <div class="account-row"><strong>Промокод</strong><span id="chosenPromo">Не применён</span></div>
     <div class="account-row"><strong>VPN-конфигурация</strong><span id="vpnStatus" class="warning">Не создана</span></div>
   </div>
+  <div class="account-card" style="margin-top:14px">
+    <strong style="display:block;margin-bottom:10px">Куда импортировать конфигурацию?</strong>
+    <div class="client-options" role="group" aria-label="Приложение для VPN">
+      <button class="client-option selected" id="clientKaring" type="button" aria-pressed="true">📱 Karing</button>
+      <button class="client-option" id="clientWireGuard" type="button" aria-pressed="false">🛡️ WireGuard</button>
+    </div>
+    <p class="note" style="margin-bottom:0">После подтверждения СБП бот пришлёт персональную ссылку на конфигурацию для выбранного приложения.</p>
+  </div>
   <button class="btn" id="pay" type="button" style="margin-top:14px">💳 Оплатить 30 дней — 499 ₽ через СБП</button>
   <button class="btn btn-ghost" id="support" type="button" style="margin-top:9px">Открыть Telegram</button>
   <p class="note" id="message">После подтверждения платежа бот отправит персональную ссылку для получения WireGuard-конфигурации. Ссылку не пересылай другим людям.</p>
@@ -192,6 +204,16 @@ $('continue').addEventListener('click',()=>{
  tg?.HapticFeedback?.impactOccurred('light');
 });
 $('back').addEventListener('click',()=>{$('account').classList.add('hidden');$('home').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})});
+let selectedClient='karing';
+function chooseClient(client){
+ selectedClient=client;
+ $('clientKaring').classList.toggle('selected',client==='karing');
+ $('clientWireGuard').classList.toggle('selected',client==='wireguard');
+ $('clientKaring').setAttribute('aria-pressed',String(client==='karing'));
+ $('clientWireGuard').setAttribute('aria-pressed',String(client==='wireguard'));
+}
+$('clientKaring').addEventListener('click',()=>chooseClient('karing'));
+$('clientWireGuard').addEventListener('click',()=>chooseClient('wireguard'));
 $('pay').addEventListener('click',async()=>{
  const button=$('pay');
  const oldText=button.textContent;
@@ -215,7 +237,7 @@ $('pay').addEventListener('click',async()=>{
    method:'POST',
    headers:{'Content-Type':'application/json'},
    cache:'no-store',
-   body:JSON.stringify({initData:tg.initData})
+   body:JSON.stringify({initData:tg.initData,clientApp:selectedClient})
   });
   let result={};
   try{result=await response.json()}catch(_){}
