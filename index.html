@@ -111,12 +111,9 @@ button{cursor:pointer}
     </div>
   </div>
 
-  <div class="section-head"><div class="section-name"><span class="step">01</span>Выбери локацию</div><div class="section-hint">4 региона</div></div>
+  <div class="section-head"><div class="section-name"><span class="step">01</span>Выбери локацию</div><div class="section-hint">1 регион</div></div>
   <div class="locations" id="locations">
     <label class="location selected"><input type="radio" name="location" value="fi" checked><span class="flag">🇫🇮</span><div><div class="loc-name">Финляндия</div><div class="loc-city">Хельсинки</div></div><span class="checkmark" aria-hidden="true"></span></label>
-    <label class="location"><input type="radio" name="location" value="de"><span class="flag">🇩🇪</span><div><div class="loc-name">Германия</div><div class="loc-city">Франкфурт</div></div><span class="checkmark" aria-hidden="true"></span></label>
-    <label class="location"><input type="radio" name="location" value="nl"><span class="flag">🇳🇱</span><div><div class="loc-name">Нидерланды</div><div class="loc-city">Амстердам</div></div><span class="checkmark" aria-hidden="true"></span></label>
-    <label class="location"><input type="radio" name="location" value="ch"><span class="flag">🇨🇭</span><div><div class="loc-name">Швейцария</div><div class="loc-city">Цюрих</div></div><span class="checkmark" aria-hidden="true"></span></label>
   </div>
 
   <div class="section-head"><div class="section-name"><span class="step">02</span>Выбери тариф</div><div class="section-hint">Без автосписаний</div></div>
@@ -163,7 +160,7 @@ const API_BASE=(document.querySelector('meta[name="averiq-api-base"]')?.content|
 const $=id=>document.getElementById(id);
 const plans={'30':499};
 const planNames={'30':'30 дней'};
-const locations={fi:'🇫🇮 Финляндия · Хельсинки',de:'🇩🇪 Германия · Франкфурт',nl:'🇳🇱 Нидерланды · Амстердам',ch:'🇨🇭 Швейцария · Цюрих'};
+const locations={fi:'🇫🇮 Финляндия · Хельсинки'};
 let promoApplied=false;
 let toastTimer;
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),2500)}
