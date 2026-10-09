@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#080a12">
+<meta name="averiq-api-base" content="">
 <title>Averiq VPN — личный кабинет</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -149,11 +150,11 @@ button{cursor:pointer}
     <div class="account-row"><strong>Локация</strong><span id="chosenLocation">🇫🇮 Финляндия · Хельсинки</span></div>
     <div class="account-row"><strong>Тариф</strong><span id="chosenPlan">90 дней — 399 ₽</span></div>
     <div class="account-row"><strong>Промокод</strong><span id="chosenPromo">Не применён</span></div>
-    <div class="account-row"><strong>VPN-соединение</strong><span class="warning">Сервер не подключён</span></div>
+    <div class="account-row"><strong>VPN-конфигурация</strong><span id="vpnStatus" class="warning">Не создана</span></div>
   </div>
-  <button class="btn" id="connect" type="button" style="margin-top:14px">Проверить готовность</button>
+  <button class="btn" id="connect" type="button" style="margin-top:14px">📱 Подключить iPhone</button>
   <button class="btn btn-ghost" id="support" type="button" style="margin-top:9px">Открыть Telegram</button>
-  <p class="note" id="message">Мы ещё настраиваем серверы. Подключение пока недоступно.</p>
+  <p class="note" id="message">Персональный файл WireGuard придёт в этот чат Telegram. Оплата и автоматическая активация тарифов пока не подключены.</p>
 </section>
 <footer class="footer"><span class="footer-mark">✦</span> AVERIQ VPN <span>·</span> СДЕЛАНО С ЗАБОТОЙ</footer>
 </main>
@@ -161,6 +162,7 @@ button{cursor:pointer}
 <script>
 const tg=window.Telegram?.WebApp;
 tg?.ready();tg?.expand();
+const API_BASE=(document.querySelector('meta[name="averiq-api-base"]')?.content||'').trim().replace(/\/$/,'');
 const $=id=>document.getElementById(id);
 const plans={'30':199,'60':299,'90':399,'365':599};
 const planNames={'30':'30 дней','60':'60 дней','90':'90 дней','365':'1 год'};
@@ -196,9 +198,43 @@ $('continue').addEventListener('click',()=>{
  tg?.HapticFeedback?.impactOccurred('light');
 });
 $('back').addEventListener('click',()=>{$('account').classList.add('hidden');$('home').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})});
-$('connect').addEventListener('click',()=>{
- $('message').textContent='Это демонстрация: VPN-сервер и выдача конфигурации ещё не настроены.';
- if(tg?.showAlert)tg.showAlert('Averiq VPN пока в разработке. Реальный сервер ещё не подключён.');else toast('Реальный VPN-сервер ещё не подключён.');
+$('connect').addEventListener('click',async()=>{
+ const button=$('connect');
+ const oldText=button.textContent;
+ if(!tg?.initData){
+  const msg='Открой Averiq Mini App через Telegram, чтобы подтвердить аккаунт.';
+  $('message').textContent=msg;
+  if(tg?.showAlert)tg.showAlert(msg);else toast(msg);
+  return;
+ }
+ button.disabled=true;
+ button.textContent='Готовим конфигурацию…';
+ $('message').textContent='Проверяем доступ и создаём персональный WireGuard-профиль.';
+ try{
+  const response=await fetch(API_BASE+'/api/wireguard/iphone',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   cache:'no-store',
+   body:JSON.stringify({initData:tg.initData})
+  });
+  let result={};
+  try{result=await response.json()}catch(_){}
+  if(!response.ok)throw new Error(result.error||'Не удалось выдать конфигурацию.');
+  $('vpnStatus').textContent='Файл отправлен в Telegram';
+  $('vpnStatus').classList.remove('warning');
+  $('message').textContent=result.message||'Проверь личный чат этого бота — там должен быть файл WireGuard.';
+  if(tg?.HapticFeedback)tg.HapticFeedback.notificationOccurred('success');
+  if(tg?.showAlert)tg.showAlert('Готово! Открой присланный файл Averiq-iPhone.conf и выбери WireGuard для импорта.');
+  else toast('Конфиг отправлен в Telegram.');
+ }catch(error){
+  const msg=error?.message||'Не удалось подключиться к серверу.';
+  $('message').textContent=msg;
+  if(tg?.HapticFeedback)tg.HapticFeedback.notificationOccurred('error');
+  if(tg?.showAlert)tg.showAlert(msg);else toast(msg);
+ }finally{
+  button.disabled=false;
+  button.textContent=oldText;
+ }
 });
 $('support').addEventListener('click',()=>{
  if(tg)tg.openTelegramLink('https://t.me/');else toast('Открой приложение внутри Telegram, чтобы использовать функции Mini App.');
