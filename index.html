@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -8,180 +7,182 @@
   <title>Averiq VPN</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    :root {
-      color-scheme: dark;
-      --bg: #090b12;
-      --panel: #121622;
-      --line: #262c3e;
-      --text: #f5f7ff;
-      --muted: #929bb3;
-      --blue: #7c6cff;
-      --cyan: #46e0d0;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; background:
-        radial-gradient(ellipse at 50% 0%, #22214b 0, transparent 48%),
-        var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      min-height: 100vh;
-    }
-    .app { max-width: 480px; margin: auto; padding: 25px 18px 36px; }
-    .top { display:flex; justify-content:space-between; align-items:center; }
-    .brand { display:flex; align-items:center; gap:11px; font-weight:800; font-size:20px; }
-    .logo {
-      display:grid; place-items:center; width:43px; height:43px;
-      border-radius:15px; background:linear-gradient(135deg,var(--blue),var(--cyan));
-      color:#080c16; font-size:22px;
-    }
-    .pill {
-      color:var(--cyan); background:#12302f; border:1px solid #20504b;
-      padding:7px 10px; border-radius:30px; font-size:11px;
-    }
-    .hero { text-align:center; padding:38px 0 25px; }
-    .orb {
-      width:118px; height:118px; border-radius:50%; margin:0 auto 23px;
-      display:grid; place-items:center; font-size:49px;
-      background:radial-gradient(circle at 35% 25%,#a6a0ff,#6755e9 48%,#202c61 75%);
-      box-shadow:0 0 60px #7666ff38, inset 0 0 24px #ffffff25;
-    }
-    h1 { font-size:32px; letter-spacing:-1px; margin:0 0 12px; }
-    .sub { color:var(--muted); font-size:14px; line-height:1.6; max-width:320px; margin:auto; }
-    .section-title { font-size:17px; font-weight:750; margin:19px 0 13px; }
-    .card {
-      background:linear-gradient(145deg,#171c2b,#10131d);
-      border:1px solid var(--line); border-radius:20px; padding:18px; margin-bottom:12px;
-    }
-    .features { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:22px 0; }
-    .feature { background:#111622; border:1px solid #22283a; border-radius:15px; padding:14px 12px; }
-    .feature .emoji { font-size:20px; }
-    .feature strong { display:block; margin-top:8px; font-size:13px; }
-    .feature small { color:var(--muted); display:block; margin-top:5px; line-height:1.4; }
-    .plan { display:flex; align-items:center; gap:12px; cursor:pointer; }
-    .plan input { accent-color:var(--blue); width:18px; height:18px; }
-    .plan-info { flex:1; }
-    .plan-name { font-weight:700; }
-    .plan-desc { color:var(--muted); font-size:12px; margin-top:5px; }
-    .price { font-size:20px; font-weight:800; }
-    .selected { border-color:var(--blue); box-shadow:0 0 0 1px #7c6cff38; }
-    button {
-      width:100%; border:0; border-radius:15px; padding:16px;
-      font-size:15px; font-weight:800; cursor:pointer; color:white;
-      background:linear-gradient(100deg,var(--blue),#6557e8);
-    }
-    button.secondary { background:#1a2030; border:1px solid #30384e; margin-top:10px; }
-    .note { color:var(--muted); font-size:11px; text-align:center; line-height:1.6; margin:13px 5px 0; }
-    .status { display:flex; justify-content:space-between; gap:10px; font-size:13px; }
-    .status span { color:var(--muted); }
-    .hidden { display:none; }
-    .footer { color:#6e7892; text-align:center; font-size:11px; margin-top:27px; }
-    .back { width:auto; padding:9px 13px; margin:0 0 20px; }
+    :root{color-scheme:dark;--bg:#090b12;--panel:#121622;--line:#262c3e;--text:#f5f7ff;--muted:#929bb3;--blue:#7c6cff;--cyan:#46e0d0;--green:#76f0b0}
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(ellipse at 50% 0%,#22214b 0,transparent 48%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+    .app{max-width:480px;margin:auto;padding:22px 18px 34px}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px}
+    .logo{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#080c16;font-size:22px}
+    .pill{color:var(--cyan);background:#12302f;border:1px solid #20504b;padding:7px 10px;border-radius:30px;font-size:10px;white-space:nowrap}
+    .hero{text-align:center;padding:31px 0 21px}
+    .orb{width:104px;height:104px;border-radius:50%;margin:0 auto 20px;display:grid;place-items:center;font-size:43px;background:radial-gradient(circle at 35% 25%,#a6a0ff,#6755e9 48%,#202c61 75%);box-shadow:0 0 60px #7666ff38,inset 0 0 24px #ffffff25}
+    h1{font-size:30px;letter-spacing:-.9px;margin:0 0 11px}
+    .sub{color:var(--muted);font-size:14px;line-height:1.6;max-width:340px;margin:auto}
+    .section-title{font-size:16px;font-weight:800;margin:21px 0 11px;display:flex;justify-content:space-between;align-items:center}
+    .section-title small{font-size:11px;color:var(--muted);font-weight:500}
+    .card{background:linear-gradient(145deg,#171c2b,#10131d);border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:10px}
+    .promo{background:linear-gradient(120deg,#211b48,#142a35);border:1px solid #5548a0;border-radius:18px;padding:16px;margin:18px 0}
+    .promo-top{display:flex;gap:11px;align-items:center}
+    .promo-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:#ffffff12;font-size:22px}
+    .promo strong{font-size:14px}
+    .promo p{font-size:12px;color:#c2c6e4;line-height:1.5;margin:5px 0 12px}
+    .promo-code{display:flex;align-items:center;gap:8px}
+    .promo-code code{flex:1;border:1px dashed #8276df;border-radius:10px;padding:11px 9px;text-align:center;font-size:12px;font-weight:800;letter-spacing:.5px;color:#fff}
+    .promo-code button{width:auto;padding:10px 12px;font-size:12px}
+    .locations{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+    .location{display:flex;align-items:center;gap:10px;padding:13px 11px;cursor:pointer;min-width:0}
+    .location input,.plan input{accent-color:var(--blue);width:17px;height:17px;flex-shrink:0}
+    .flag{font-size:25px}
+    .loc-name{font-weight:750;font-size:13px}
+    .loc-state{font-size:11px;color:var(--muted);margin-top:4px}
+    .selected{border-color:var(--blue)!important;box-shadow:0 0 0 1px #7c6cff38}
+    .plan{display:flex;align-items:center;gap:11px;cursor:pointer}
+    .plan-info{flex:1;min-width:0}
+    .plan-name{font-weight:800;font-size:14px}
+    .plan-desc{color:var(--muted);font-size:11px;margin-top:5px}
+    .price{font-size:19px;font-weight:850;white-space:nowrap}
+    .badge{font-size:9px;color:#07150f;background:var(--green);border-radius:6px;padding:4px 6px;margin-left:5px;vertical-align:2px}
+    .field-label{display:block;font-size:12px;color:var(--muted);margin:14px 0 7px}
+    .input{width:100%;background:#0c101a;color:var(--text);border:1px solid #30384e;border-radius:12px;padding:13px;font-size:14px;outline:none}
+    .input:focus{border-color:var(--blue)}
+    button{width:100%;border:0;border-radius:14px;padding:15px;font-size:14px;font-weight:850;cursor:pointer;color:white;background:linear-gradient(100deg,var(--blue),#6557e8)}
+    button.secondary{background:#1a2030;border:1px solid #30384e;margin-top:9px}
+    button.small{width:auto;padding:9px 11px;border-radius:9px}
+    .note{color:var(--muted);font-size:11px;text-align:center;line-height:1.6;margin:12px 5px 0}
+    .status{display:flex;justify-content:space-between;gap:12px;font-size:12px;line-height:1.5}
+    .status span{color:var(--muted);text-align:right}
+    .hidden{display:none!important}
+    .footer{color:#6e7892;text-align:center;font-size:11px;margin-top:26px}
+    .back{width:auto;padding:9px 13px;margin:0 0 14px}
+    .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#20283b;border:1px solid #38425c;color:#fff;border-radius:12px;padding:11px 15px;font-size:12px;box-shadow:0 10px 30px #0008;z-index:10;max-width:90%;text-align:center}
+    .discount-line{display:flex;justify-content:space-between;align-items:center;margin-top:11px;font-size:12px;color:var(--muted)}
+    .discount-line strong{color:var(--green);font-size:14px}
+    @media(max-width:360px){.app{padding:18px 12px}.brand{font-size:18px}.pill{font-size:9px}.price{font-size:17px}.location{padding:11px 8px;gap:7px}}
   </style>
 </head>
 <body>
   <main class="app">
     <header class="top">
       <div class="brand"><div class="logo">A</div> Averiq VPN</div>
-      <div class="pill">● SECURE ACCESS</div>
+      <div class="pill">● PRIVATE ACCESS</div>
     </header>
 
     <section id="home">
       <div class="hero">
         <div class="orb">ϟ</div>
-        <h1>Твой интернет.<br>Твои правила.</h1>
-        <p class="sub">Приватность и защищённое соединение в одном месте.</p>
+        <h1>Интернет без границ</h1>
+        <p class="sub">Добро пожаловать в Averiq VPN — удобное управление подпиской и выбор локации в одном месте.</p>
       </div>
 
-      <div class="features">
-        <div class="feature"><div class="emoji">🛡️</div><strong>Защита соединения</strong><small>VPN после подключения сервера</small></div>
-        <div class="feature"><div class="emoji">⚡</div><strong>Быстрый доступ</strong><small>Удобное управление подпиской</small></div>
-        <div class="feature"><div class="emoji">🌍</div><strong>Выбор локации</strong><small>Доступность зависит от серверов</small></div>
-        <div class="feature"><div class="emoji">🔑</div><strong>Твой доступ</strong><small>Управление подпиской в Telegram</small></div>
+      <div class="promo">
+        <div class="promo-top"><div class="promo-icon">🎁</div><div><strong>Промокод на запуск</strong><div style="font-size:12px;color:#c2c6e4;margin-top:4px">Скидка 50% на старте</div></div></div>
+        <p>Выбери сервер и тариф, введи промокод ниже и следуй подсказкам приложения.</p>
+        <div class="promo-code"><code>AVERIQLAUNCH50</code><button class="small" id="copyPromo" type="button">Копировать</button></div>
       </div>
 
-      <div class="section-title">Выбери тариф</div>
-      <label class="card plan selected" id="p7">
-        <input type="radio" name="plan" value="7" checked>
-        <div class="plan-info"><div class="plan-name">7 дней</div><div class="plan-desc">Попробовать сервис</div></div>
-        <div class="price">49 ₽</div>
-      </label>
-      <label class="card plan" id="p30">
-        <input type="radio" name="plan" value="30">
-        <div class="plan-info"><div class="plan-name">30 дней</div><div class="plan-desc">Полный месяц доступа</div></div>
-        <div class="price">129 ₽</div>
-      </label>
+      <div class="section-title">1. Выбери сервер <small>Локация</small></div>
+      <div class="locations" id="locations">
+        <label class="card location selected"><input type="radio" name="location" value="fi" checked><span class="flag">🇫🇮</span><div><div class="loc-name">Финляндия</div><div class="loc-state">Хельсинки</div></div></label>
+        <label class="card location"><input type="radio" name="location" value="de"><span class="flag">🇩🇪</span><div><div class="loc-name">Германия</div><div class="loc-state">Франкфурт</div></div></label>
+        <label class="card location"><input type="radio" name="location" value="nl"><span class="flag">🇳🇱</span><div><div class="loc-name">Нидерланды</div><div class="loc-state">Амстердам</div></div></label>
+        <label class="card location"><input type="radio" name="location" value="ch"><span class="flag">🇨🇭</span><div><div class="loc-name">Швейцария</div><div class="loc-state">Цюрих</div></div></label>
+      </div>
 
+      <div class="section-title">2. Выбери тариф <small>Доступ</small></div>
+      <label class="card plan" id="p30"><input type="radio" name="plan" value="30"><div class="plan-info"><div class="plan-name">30 дней</div><div class="plan-desc">На месяц</div></div><div class="price">199 ₽</div></label>
+      <label class="card plan" id="p60"><input type="radio" name="plan" value="60"><div class="plan-info"><div class="plan-name">60 дней</div><div class="plan-desc">На два месяца</div></div><div class="price">299 ₽</div></label>
+      <label class="card plan selected" id="p90"><input type="radio" name="plan" value="90" checked><div class="plan-info"><div class="plan-name">90 дней <span class="badge">ВЫГОДНО</span></div><div class="plan-desc">На три месяца</div></div><div class="price">399 ₽</div></label>
+      <label class="card plan" id="p365"><input type="radio" name="plan" value="365"><div class="plan-info"><div class="plan-name">1 год</div><div class="plan-desc">365 дней доступа</div></div><div class="price">599 ₽</div></label>
+
+      <div class="section-title">3. Промокод <small>Необязательно</small></div>
+      <div class="card">
+        <label class="field-label" for="promoInput">Введи код на скидку</label>
+        <div style="display:flex;gap:8px"><input class="input" id="promoInput" placeholder="AVERIQLAUNCH50" autocomplete="off" style="min-width:0"><button id="applyPromo" type="button" style="width:auto;white-space:nowrap;padding:0 14px">Применить</button></div>
+        <div class="discount-line"><span id="promoStatus">Промокод не применён</span><strong id="finalPrice">399 ₽</strong></div>
+      </div>
       <button id="continue">Продолжить</button>
-      <p class="note">Пока доступен только демонстрационный интерфейс. Покупка и подключение VPN ещё не активны.</p>
+      <p class="note">Демонстрационный интерфейс: реальная оплата, скидки и VPN-серверы ещё не подключены. Цены и промокод пока не являются оформлением покупки.</p>
     </section>
 
     <section id="account" class="hidden">
-      <button class="secondary back" id="back">← Назад к тарифам</button>
+      <button class="secondary back" id="back" type="button">← Назад к выбору</button>
       <div class="hero" style="padding-top:10px">
         <div class="orb">🔐</div>
-        <h1>Твоя подписка</h1>
+        <h1>Твой кабинет</h1>
         <p class="sub" id="greeting">Добро пожаловать в Averiq VPN</p>
       </div>
       <div class="card">
-        <div class="status"><strong>Статус</strong><span>Ожидает подключения сервера</span></div>
-        <hr style="border:0;border-top:1px solid #262c3e;margin:17px 0">
-        <div class="status"><strong>Выбранный тариф</strong><span id="chosen">7 дней — 49 ₽</span></div>
-        <hr style="border:0;border-top:1px solid #262c3e;margin:17px 0">
+        <div class="status"><strong>Статус</strong><span>Ожидает подключения сервера</span></div><hr style="border:0;border-top:1px solid #262c3e;margin:15px 0">
+        <div class="status"><strong>Сервер</strong><span id="chosenLocation">🇫🇮 Финляндия · Хельсинки</span></div><hr style="border:0;border-top:1px solid #262c3e;margin:15px 0">
+        <div class="status"><strong>Тариф</strong><span id="chosenPlan">90 дней — 399 ₽</span></div><hr style="border:0;border-top:1px solid #262c3e;margin:15px 0">
+        <div class="status"><strong>Промокод</strong><span id="chosenPromo">Не применён</span></div><hr style="border:0;border-top:1px solid #262c3e;margin:15px 0">
         <div class="status"><strong>VPN-соединение</strong><span>Не подключено</span></div>
       </div>
-      <button id="connect">Подготовить подключение</button>
-      <button class="secondary" id="support">Открыть Telegram</button>
-      <p class="note" id="message">Оплата не производится. Не отправляй деньги через эту демоверсию.</p>
+      <button id="connect" type="button">Подготовить подключение</button>
+      <button class="secondary" id="support" type="button">Открыть Telegram</button>
+      <p class="note" id="message">Серверы и оплата ещё не подключены. Не отправляй деньги через эту демоверсию.</p>
     </section>
-
     <div class="footer">AVERIQ VPN · PRIVATE BY DESIGN</div>
   </main>
-
+  <div id="toast" class="toast hidden" role="status"></div>
   <script>
     const tg = window.Telegram?.WebApp;
-    tg?.ready();
-    tg?.expand();
-
+    tg?.ready(); tg?.expand();
     const $ = id => document.getElementById(id);
-    const radios = [...document.querySelectorAll('input[name="plan"]')];
-
-    radios.forEach(radio => {
-      radio.addEventListener('change', () => {
-        $('p7').classList.toggle('selected', radio.value === '7' && radio.checked);
-        $('p30').classList.toggle('selected', radio.value === '30' && radio.checked);
-      });
+    const plans = {'30':199,'60':299,'90':399,'365':599};
+    const locations = {
+      fi:{name:'🇫🇮 Финляндия · Хельсинки'},
+      de:{name:'🇩🇪 Германия · Франкфурт'},
+      nl:{name:'🇳🇱 Нидерланды · Амстердам'},
+      ch:{name:'🇨🇭 Швейцария · Цюрих'}
+    };
+    let promoApplied = false;
+    let toastTimer;
+    function toast(message){
+      $('toast').textContent=message; $('toast').classList.remove('hidden');
+      clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),2600);
+    }
+    function selectedPlan(){return document.querySelector('input[name="plan"]:checked')?.value || '90'}
+    function selectedLocation(){return document.querySelector('input[name="location"]:checked')?.value || 'fi'}
+    function price(){const base=plans[selectedPlan()];return promoApplied?Math.round(base/2):base}
+    function updateUI(){
+      document.querySelectorAll('input[name="plan"]').forEach(r=> $('p'+r.value).classList.toggle('selected',r.checked));
+      document.querySelectorAll('input[name="location"]').forEach(r=>r.closest('.location').classList.toggle('selected',r.checked));
+      $('finalPrice').textContent=price()+' ₽';
+      $('promoStatus').textContent=promoApplied?'Скидка 50% применена (демо)':'Промокод не применён';
+    }
+    document.querySelectorAll('input[name="plan"],input[name="location"]').forEach(r=>r.addEventListener('change',updateUI));
+    $('promoInput').addEventListener('input',()=>{if(promoApplied){promoApplied=false;updateUI()}});
+    $('applyPromo').addEventListener('click',()=>{
+      const code=$('promoInput').value.trim().toUpperCase();
+      if(code==='AVERIQLAUNCH50'){promoApplied=true;toast('Промокод принят в деморежиме: скидка 50%');}
+      else{promoApplied=false;toast('Промокод не распознан. Проверь написание.');}
+      updateUI();
     });
-
-    $('continue').addEventListener('click', () => {
-      const plan = radios.find(r => r.checked)?.value || '7';
-      $('chosen').textContent = plan === '30' ? '30 дней — 129 ₽' : '7 дней — 49 ₽';
-      const name = tg?.initDataUnsafe?.user?.first_name;
-      $('greeting').textContent = name ? `Привет, ${name}! Это твой кабинет Averiq VPN.` : 'Добро пожаловать в Averiq VPN';
-      $('home').classList.add('hidden');
-      $('account').classList.remove('hidden');
-      window.scrollTo(0, 0);
+    $('copyPromo').addEventListener('click',async()=>{
+      try{await navigator.clipboard.writeText('AVERIQLAUNCH50');toast('Промокод скопирован');}
+      catch(e){$('promoInput').value='AVERIQLAUNCH50';toast('Промокод вставлен в поле ниже');}
+    });
+    $('continue').addEventListener('click',()=>{
+      const plan=selectedPlan(),loc=selectedLocation();
+      $('chosenPlan').textContent=({'30':'30 дней','60':'60 дней','90':'90 дней','365':'1 год'})[plan]+' — '+price()+' ₽';
+      $('chosenLocation').textContent=locations[loc].name;
+      $('chosenPromo').textContent=promoApplied?'AVERIQLAUNCH50 · −50% (демо)':'Не применён';
+      const name=tg?.initDataUnsafe?.user?.first_name;
+      $('greeting').textContent=name?'Привет, '+name+'! Это твой кабинет Averiq VPN.':'Добро пожаловать в Averiq VPN. Следуй подсказкам приложения.';
+      $('home').classList.add('hidden');$('account').classList.remove('hidden');window.scrollTo(0,0);
       tg?.HapticFeedback?.impactOccurred('light');
     });
-
-    $('back').addEventListener('click', () => {
-      $('account').classList.add('hidden');
-      $('home').classList.remove('hidden');
-      window.scrollTo(0, 0);
-    });
-
-    $('connect').addEventListener('click', () => {
-      $('message').textContent = 'Сервер и выдача конфигураций ещё не подключены. Сейчас соединиться с VPN нельзя.';
+    $('back').addEventListener('click',()=>{$('account').classList.add('hidden');$('home').classList.remove('hidden');window.scrollTo(0,0)});
+    $('connect').addEventListener('click',()=>{
+      $('message').textContent='Выбрана локация для демо, но реальный сервер и выдача VPN-конфигурации ещё не подключены.';
       tg?.showAlert?.('Averiq VPN пока настраивается. Реальный VPN-сервер ещё не подключён.');
     });
-
-    $('support').addEventListener('click', () => {
-      if (tg) {
-        tg.openTelegramLink('https://t.me/');
-      } else {
-        alert('Открой Averiq VPN внутри Telegram, чтобы использовать функции Mini App.');
-      }
+    $('support').addEventListener('click',()=>{
+      if(tg){tg.openTelegramLink('https://t.me/')}else{alert('Открой Averiq VPN внутри Telegram, чтобы использовать функции Mini App.')}
     });
+    updateUI();
   </script>
 </body>
 </html>
