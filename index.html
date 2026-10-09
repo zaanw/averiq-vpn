@@ -43,7 +43,7 @@ button{cursor:pointer}
 .flag{font-size:25px;filter:saturate(.9)}
 .loc-name{font-size:12px;font-weight:850;white-space:nowrap}
 .loc-city{font-size:10px;color:var(--muted);margin-top:5px}
-.checkmark{position:absolute;right:9px;top:9px;width:16px;height:16px;border-radius:50%;display:grid;place-items:center;background:#8b78ff;color:white;font-size:10px;opacity:0}
+.checkmark{position:absolute;right:9px;top:9px;width:16px;height:16px;border-radius:50%;display:grid;place-items:center;background:#8b78ff;opacity:0}.checkmark:after{content:"";width:6px;height:3px;border-left:2px solid white;border-bottom:2px solid white;transform:rotate(-45deg) translate(1px,-1px)}
 .location.selected .checkmark{opacity:1}
 .plans{display:grid;gap:9px}
 .plan{display:flex;align-items:center;gap:12px;padding:15px;border:1px solid var(--line);border-radius:17px;background:linear-gradient(145deg,#141927,#10131d);cursor:pointer;transition:border-color .18s}
@@ -113,18 +113,15 @@ button{cursor:pointer}
 
   <div class="section-head"><div class="section-name"><span class="step">01</span>Выбери локацию</div><div class="section-hint">4 региона</div></div>
   <div class="locations" id="locations">
-    <label class="location selected"><input type="radio" name="location" value="fi" checked><span class="flag">🇫🇮</span><div><div class="loc-name">Финляндия</div><div class="loc-city">Хельсинки</div></div><span class="checkmark">✓</span></label>
-    <label class="location"><input type="radio" name="location" value="de"><span class="flag">🇩🇪</span><div><div class="loc-name">Германия</div><div class="loc-city">Франкфурт</div></div><span class="checkmark">✓</span></label>
-    <label class="location"><input type="radio" name="location" value="nl"><span class="flag">🇳🇱</span><div><div class="loc-name">Нидерланды</div><div class="loc-city">Амстердам</div></div><span class="checkmark">✓</span></label>
-    <label class="location"><input type="radio" name="location" value="ch"><span class="flag">🇨🇭</span><div><div class="loc-name">Швейцария</div><div class="loc-city">Цюрих</div></div><span class="checkmark">✓</span></label>
+    <label class="location selected"><input type="radio" name="location" value="fi" checked><span class="flag">🇫🇮</span><div><div class="loc-name">Финляндия</div><div class="loc-city">Хельсинки</div></div><span class="checkmark" aria-hidden="true"></span></label>
+    <label class="location"><input type="radio" name="location" value="de"><span class="flag">🇩🇪</span><div><div class="loc-name">Германия</div><div class="loc-city">Франкфурт</div></div><span class="checkmark" aria-hidden="true"></span></label>
+    <label class="location"><input type="radio" name="location" value="nl"><span class="flag">🇳🇱</span><div><div class="loc-name">Нидерланды</div><div class="loc-city">Амстердам</div></div><span class="checkmark" aria-hidden="true"></span></label>
+    <label class="location"><input type="radio" name="location" value="ch"><span class="flag">🇨🇭</span><div><div class="loc-name">Швейцария</div><div class="loc-city">Цюрих</div></div><span class="checkmark" aria-hidden="true"></span></label>
   </div>
 
   <div class="section-head"><div class="section-name"><span class="step">02</span>Выбери тариф</div><div class="section-hint">Без автосписаний</div></div>
   <div class="plans">
-    <label class="plan"><input type="radio" name="plan" value="30"><span class="plan-radio"></span><div class="plan-info"><div class="plan-title">30 дней</div><div class="plan-caption">Попробовать сервис</div></div><div class="price">199 ₽</div></label>
-    <label class="plan"><input type="radio" name="plan" value="60"><span class="plan-radio"></span><div class="plan-info"><div class="plan-title">60 дней</div><div class="plan-caption">Два месяца доступа</div></div><div class="price">299 ₽</div></label>
-    <label class="plan selected"><input type="radio" name="plan" value="90" checked><span class="plan-radio"></span><div class="plan-info"><div class="plan-title">90 дней <span class="tag">ПОПУЛЯРНЫЙ</span></div><div class="plan-caption">Три месяца доступа</div></div><div class="price">399 ₽</div></label>
-    <label class="plan"><input type="radio" name="plan" value="365"><span class="plan-radio"></span><div class="plan-info"><div class="plan-title">365 дней</div><div class="plan-caption">На целый год</div></div><div class="price">599 ₽</div></label>
+    <label class="plan selected"><input type="radio" name="plan" value="30" checked><span class="plan-radio"></span><div class="plan-info"><div class="plan-title">30 дней</div><div class="plan-caption">Доступ на один месяц</div></div><div class="price">499 ₽</div></label>
   </div>
 
   <div class="section-head"><div class="section-name"><span class="step">03</span>Промокод</div><div class="section-hint">Необязательно</div></div>
@@ -133,7 +130,7 @@ button{cursor:pointer}
     <div class="promo-form"><input class="input" id="promoInput" placeholder="Введи промокод" autocomplete="off" aria-label="Промокод"><button class="btn btn-compact" id="applyPromo" type="button">Применить</button></div>
   </div>
 
-  <div class="price-summary"><div><div class="summary-label">Стоимость выбранного тарифа</div><div class="summary-caption" id="promoStatus">Промокод не применён</div></div><div class="summary-price" id="finalPrice">399 ₽</div></div>
+  <div class="price-summary"><div><div class="summary-label">Стоимость выбранного тарифа</div><div class="summary-caption" id="promoStatus">Промокод не применён</div></div><div class="summary-price" id="finalPrice">499 ₽</div></div>
   <button class="btn" id="continue" type="button">Открыть личный кабинет <span>→</span></button>
   <div class="notice"><span>ⓘ</span><div><strong>Сейчас это демоверсия.</strong> Реальная оплата, скидки и VPN-серверы не подключены. Не отправляй деньги через эту страницу.</div></div>
 </section>
@@ -148,7 +145,7 @@ button{cursor:pointer}
   <div class="account-card">
     <div class="account-row"><strong>Статус подписки</strong><span class="warning">Не активна</span></div>
     <div class="account-row"><strong>Локация</strong><span id="chosenLocation">🇫🇮 Финляндия · Хельсинки</span></div>
-    <div class="account-row"><strong>Тариф</strong><span id="chosenPlan">90 дней — 399 ₽</span></div>
+    <div class="account-row"><strong>Тариф</strong><span id="chosenPlan">30 дней — 499 ₽</span></div>
     <div class="account-row"><strong>Промокод</strong><span id="chosenPromo">Не применён</span></div>
     <div class="account-row"><strong>VPN-конфигурация</strong><span id="vpnStatus" class="warning">Не создана</span></div>
   </div>
@@ -164,13 +161,13 @@ const tg=window.Telegram?.WebApp;
 tg?.ready();tg?.expand();
 const API_BASE=(document.querySelector('meta[name="averiq-api-base"]')?.content||'').trim().replace(/\/$/,'');
 const $=id=>document.getElementById(id);
-const plans={'30':499,'60':299,'90':399,'365':599};
-const planNames={'30':'30 дней','60':'60 дней','90':'90 дней','365':'1 год'};
+const plans={'30':499};
+const planNames={'30':'30 дней'};
 const locations={fi:'🇫🇮 Финляндия · Хельсинки',de:'🇩🇪 Германия · Франкфурт',nl:'🇳🇱 Нидерланды · Амстердам',ch:'🇨🇭 Швейцария · Цюрих'};
 let promoApplied=false;
 let toastTimer;
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),2500)}
-function selectedPlan(){return document.querySelector('input[name="plan"]:checked')?.value||'90'}
+function selectedPlan(){return document.querySelector('input[name="plan"]:checked')?.value||'30'}
 function selectedLocation(){return document.querySelector('input[name="location"]:checked')?.value||'fi'}
 function price(){const base=plans[selectedPlan()];return promoApplied?Math.round(base/2):base}
 function updateUI(){
