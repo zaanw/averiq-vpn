@@ -52,7 +52,8 @@ if [[ -n "$YOOKASSA_SHOP_ID" && -z "$YOOKASSA_SECRET_KEY" ]] || [[ -z "$YOOKASSA
   echo "Нужно указать и Shop ID, и Secret Key, либо оставить оба поля пустыми."
   exit 1
 fi
-if [[ "$YOOKASSA_SHOP_ID" == *if [[ -z "$WG_ENDPOINT" ]]; then
+read -r -p "Публичный IP/домен WireGuard [79.137.184.71]: " WG_ENDPOINT
+if [[ -z "$WG_ENDPOINT" ]]; then
   WG_ENDPOINT="79.137.184.71"
 fi
 if [[ ! "$WG_ENDPOINT" =~ ^[A-Za-z0-9.-]+$ ]]; then
@@ -88,7 +89,7 @@ if systemctl is-active --quiet averiq-api; then
   echo "Проверка:"
   curl -fsS http://127.0.0.1:8765/health || true
   echo
-  echo "Осталось настроить HTTPS reverse proxy для /api/* и задать API URL в index.html."
+  echo "Осталось настроить HTTPS reverse proxy для /api/* и /s/*, а затем задать API URL в index.html."
 else
   systemctl --no-pager --full status averiq-api || true
   journalctl -u averiq-api -n 30 --no-pager || true
@@ -115,7 +116,7 @@ DB_PATH=/var/lib/averiq-api/clients.sqlite3
 API_PORT=8765
 EOF
 chmod 600 /etc/averiq-api.env
-unset BOT_TOKEN
+unset BOT_TOKEN YOOKASSA_SECRET_KEY
 
 systemctl daemon-reload
 systemctl enable --now averiq-api
