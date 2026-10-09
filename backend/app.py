@@ -32,6 +32,7 @@ WG_PORT = int(os.environ.get("WG_PORT", "51820"))
 YOOKASSA_SHOP_ID = os.environ.get("YOOKASSA_SHOP_ID", "").strip()
 YOOKASSA_SECRET_KEY = os.environ.get("YOOKASSA_SECRET_KEY", "").strip()
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "").strip().rstrip("/")
+MINI_APP_URL = os.environ.get("MINI_APP_URL", "").strip().rstrip("/")
 SUBSCRIPTION_DAYS = 30
 SUBSCRIPTION_PRICE = "499.00"
 WG_CONFIG = Path(os.environ.get("WG_CONFIG", "/etc/wireguard/wg0.conf"))
@@ -333,13 +334,13 @@ def yookassa_request(method, path, body=None, idempotence_key=None):
 
 
 def create_payment(user_id):
-    if not PUBLIC_BASE_URL.startswith("https://"):
-        raise ApiError("Платёжная ссылка ещё не настроена: нужен публичный HTTPS-адрес Mini App.", 503)
+    if not PUBLIC_BASE_URL.startswith("https://") or not MINI_APP_URL.startswith("https://"):
+        raise ApiError("Оплата ещё не настроена: нужны публичные HTTPS-адреса API и Mini App.", 503)
     order_id = str(uuid.uuid4())
     payment = yookassa_request("POST", "/payments", {
         "amount": {"value": SUBSCRIPTION_PRICE, "currency": "RUB"},
         "payment_method_data": {"type": "sbp"},
-        "confirmation": {"type": "redirect", "return_url": PUBLIC_BASE_URL + "/?payment=return"},
+        "confirmation": {"type": "redirect", "return_url": MINI_APP_URL + "/?payment=return"},
         "capture": True,
         "description": "Averiq VPN — подписка на 30 дней",
         "metadata": {"order_id": order_id, "telegram_user_id": str(user_id)}
@@ -614,6 +615,10 @@ def main():
         raise SystemExit("WG_ENDPOINT must be a hostname or IP address.")
     if not WG_CONFIG.is_file():
         raise SystemExit(f"WireGuard config not found: {WG_CONFIG}")
+    if YOOKASSA_SHOP_ID and not YOOKASSA_SECRET_KEY:
+        raise SystemExit("YOOKASSA_SECRET_KEY is missing.")
+    if YOOKASSA_SECRET_KEY and not YOOKASSA_SHOP_ID:
+        raise SystemExit("YOOKASSA_SHOP_ID is missing.")
     init_db()
     threading.Thread(target=expire_subscriptions_loop, daemon=True).start()
     print(f"Averiq API listening on {HOST}:{PORT}; interface={WG_INTERFACE}", flush=True)
