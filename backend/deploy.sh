@@ -17,7 +17,7 @@ install -m 700 backend/app.py /opt/averiq-api/app.py
 install -m 644 backend/averiq-api.service /etc/systemd/system/averiq-api.service
 
 echo
-echo "Настройка Averiq API. Токен не будет отображён и не попадёт в GitHub."
+echo "Настройка Averiq API. Секреты не будут выведены на экран и не попадут в GitHub."
 read -r -s -p "Telegram Bot Token (из BotFather): " BOT_TOKEN
 echo
 if [[ -z "$BOT_TOKEN" || "$BOT_TOKEN" == *" "* ]]; then
@@ -25,9 +25,9 @@ if [[ -z "$BOT_TOKEN" || "$BOT_TOKEN" == *" "* ]]; then
   exit 1
 fi
 
-read -r -p "HTTPS origin Mini App, например https://zaanw.github.io: " ALLOWED_ORIGINS
+read -r -p "HTTPS origin Mini App (например https://zaanw.github.io): " ALLOWED_ORIGINS
 if [[ -z "$ALLOWED_ORIGINS" || "$ALLOWED_ORIGINS" == *" "* || "$ALLOWED_ORIGINS" == *"*"* ]]; then
-  echo "Укажи точный origin без пути, например https://example.com (без завершающего /)."
+  echo "Укажи точный origin без пути, например https://zaanw.github.io."
   exit 1
 fi
 read -r -p "Telegram ID для тестового доступа (число или список через запятую): " ALLOWED_TELEGRAM_IDS
@@ -52,6 +52,7 @@ if [[ -n "$YOOKASSA_SHOP_ID" && -z "$YOOKASSA_SECRET_KEY" ]] || [[ -z "$YOOKASSA
   echo "Нужно указать и Shop ID, и Secret Key, либо оставить оба поля пустыми."
   exit 1
 fi
+
 read -r -p "Публичный IP/домен WireGuard [79.137.184.71]: " WG_ENDPOINT
 if [[ -z "$WG_ENDPOINT" ]]; then
   WG_ENDPOINT="79.137.184.71"
@@ -90,126 +91,6 @@ if systemctl is-active --quiet averiq-api; then
   curl -fsS http://127.0.0.1:8765/health || true
   echo
   echo "Осталось настроить HTTPS reverse proxy для /api/* и /s/*, а затем задать API URL в index.html."
-else
-  systemctl --no-pager --full status averiq-api || true
-  journalctl -u averiq-api -n 30 --no-pager || true
-  exit 1
-fi
-\n'* || "$YOOKASSA_SECRET_KEY" == *if [[ -z "$WG_ENDPOINT" ]]; then
-  WG_ENDPOINT="79.137.184.71"
-fi
-if [[ ! "$WG_ENDPOINT" =~ ^[A-Za-z0-9.-]+$ ]]; then
-  echo "Укажи только IP-адрес или домен, без https:// и порта."
-  exit 1
-fi
-
-umask 077
-cat > /etc/averiq-api.env <<EOF
-BOT_TOKEN=$BOT_TOKEN
-ALLOWED_ORIGINS=$ALLOWED_ORIGINS
-ALLOWED_TELEGRAM_IDS=$ALLOWED_TELEGRAM_IDS
-WG_ENDPOINT=$WG_ENDPOINT
-WG_PORT=51820
-WG_INTERFACE=wg0
-WG_CONFIG=/etc/wireguard/wg0.conf
-DB_PATH=/var/lib/averiq-api/clients.sqlite3
-API_PORT=8765
-EOF
-chmod 600 /etc/averiq-api.env
-unset BOT_TOKEN YOOKASSA_SECRET_KEY
-
-systemctl daemon-reload
-systemctl enable --now averiq-api
-sleep 1
-if systemctl is-active --quiet averiq-api; then
-  echo
-  echo "Averiq API запущен локально на 127.0.0.1:8765."
-  echo "Проверка:"
-  curl -fsS http://127.0.0.1:8765/health || true
-  echo
-  echo "Осталось настроить HTTPS reverse proxy для /api/* и задать API URL в index.html."
-else
-  systemctl --no-pager --full status averiq-api || true
-  journalctl -u averiq-api -n 30 --no-pager || true
-  exit 1
-fi
-\n'* || "$YOOKASSA_SECRET_KEY" == *if [[ -z "$WG_ENDPOINT" ]]; then
-  WG_ENDPOINT="79.137.184.71"
-fi
-if [[ ! "$WG_ENDPOINT" =~ ^[A-Za-z0-9.-]+$ ]]; then
-  echo "Укажи только IP-адрес или домен, без https:// и порта."
-  exit 1
-fi
-
-umask 077
-cat > /etc/averiq-api.env <<EOF
-BOT_TOKEN=$BOT_TOKEN
-ALLOWED_ORIGINS=$ALLOWED_ORIGINS
-ALLOWED_TELEGRAM_IDS=$ALLOWED_TELEGRAM_IDS
-WG_ENDPOINT=$WG_ENDPOINT
-WG_PORT=51820
-WG_INTERFACE=wg0
-WG_CONFIG=/etc/wireguard/wg0.conf
-DB_PATH=/var/lib/averiq-api/clients.sqlite3
-API_PORT=8765
-EOF
-chmod 600 /etc/averiq-api.env
-unset BOT_TOKEN
-
-systemctl daemon-reload
-systemctl enable --now averiq-api
-sleep 1
-if systemctl is-active --quiet averiq-api; then
-  echo
-  echo "Averiq API запущен локально на 127.0.0.1:8765."
-  echo "Проверка:"
-  curl -fsS http://127.0.0.1:8765/health || true
-  echo
-  echo "Осталось настроить HTTPS reverse proxy для /api/* и задать API URL в index.html."
-else
-  systemctl --no-pager --full status averiq-api || true
-  journalctl -u averiq-api -n 30 --no-pager || true
-  exit 1
-fi
-\r'* ]]; then
-  echo "Платёжные параметры содержат недопустимые символы."
-  exit 1
-fi
-
-read -r -p "Публичный IP/домен WireGuard [79.137.184.71]: " WG_ENDPOINT
-if [[ -z "$WG_ENDPOINT" ]]; then
-  WG_ENDPOINT="79.137.184.71"
-fi
-if [[ ! "$WG_ENDPOINT" =~ ^[A-Za-z0-9.-]+$ ]]; then
-  echo "Укажи только IP-адрес или домен, без https:// и порта."
-  exit 1
-fi
-
-umask 077
-cat > /etc/averiq-api.env <<EOF
-BOT_TOKEN=$BOT_TOKEN
-ALLOWED_ORIGINS=$ALLOWED_ORIGINS
-ALLOWED_TELEGRAM_IDS=$ALLOWED_TELEGRAM_IDS
-WG_ENDPOINT=$WG_ENDPOINT
-WG_PORT=51820
-WG_INTERFACE=wg0
-WG_CONFIG=/etc/wireguard/wg0.conf
-DB_PATH=/var/lib/averiq-api/clients.sqlite3
-API_PORT=8765
-EOF
-chmod 600 /etc/averiq-api.env
-unset BOT_TOKEN
-
-systemctl daemon-reload
-systemctl enable --now averiq-api
-sleep 1
-if systemctl is-active --quiet averiq-api; then
-  echo
-  echo "Averiq API запущен локально на 127.0.0.1:8765."
-  echo "Проверка:"
-  curl -fsS http://127.0.0.1:8765/health || true
-  echo
-  echo "Осталось настроить HTTPS reverse proxy для /api/* и задать API URL в index.html."
 else
   systemctl --no-pager --full status averiq-api || true
   journalctl -u averiq-api -n 30 --no-pager || true
