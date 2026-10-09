@@ -458,6 +458,13 @@ def has_active_subscription(user_id):
         row = db.execute("SELECT expires_at FROM subscriptions WHERE telegram_user_id = ?", (user_id,)).fetchone()
     return bool(row and int(row[0]) > int(time.time()))
 
+def subscription_status(user_id):
+    with sqlite3.connect(DB_PATH, timeout=15) as db:
+        row = db.execute("SELECT expires_at FROM subscriptions WHERE telegram_user_id = ?", (user_id,)).fetchone()
+    expires_at = int(row[0]) if row else 0
+    active = expires_at > int(time.time())
+    return {"ok": True, "active": active, "expiresAt": expires_at if active else None}
+
 
 def expire_subscriptions_loop():
     while True:
@@ -568,7 +575,7 @@ class Handler(BaseHTTPRequestHandler):
         if origin not in ALLOWED_ORIGINS:
             self.write_json(403, {"error": "Источник запроса не разрешён."})
             return
-        if self.path not in {"/api/wireguard/iphone", "/api/payments/create"}:
+        if self.path not in {"/api/wireguard/iphone", "/api/payments/create", "/api/subscription/status"}:
             self.write_json(404, {"error": "Not found."}, origin)
             return
         try:
@@ -581,6 +588,9 @@ class Handler(BaseHTTPRequestHandler):
                 client_app = str(payload.get("clientApp", "karing")).strip().lower()
                 result = create_payment(user_id, client_app)
                 self.write_json(200, result, origin)
+                return
+            if self.path == "/api/subscription/status":
+                self.write_json(200, subscription_status(user_id), origin)
                 return
             if ALLOWED_TELEGRAM_IDS is not None and user_id not in ALLOWED_TELEGRAM_IDS:
                 raise ApiError(
