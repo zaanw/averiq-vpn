@@ -130,9 +130,13 @@ def init_db():
                     telegram_user_id INTEGER PRIMARY KEY,
                     expires_at INTEGER NOT NULL,
                     token_hash TEXT NOT NULL UNIQUE,
+                    link_token TEXT NOT NULL,
                     updated_at INTEGER NOT NULL
                 )
             """)
+            columns = {row[1] for row in db.execute("PRAGMA table_info(subscriptions)").fetchall()}
+            if "link_token" not in columns:
+                db.execute("ALTER TABLE subscriptions ADD COLUMN link_token TEXT NOT NULL DEFAULT ''")
     finally:
         os.umask(old_umask)
     os.chmod(DB_PATH, 0o600)
@@ -373,6 +377,8 @@ def activate_subscription(order_id, payment):
         return False
     if amount.get("currency") != "RUB" or amount.get("value") != SUBSCRIPTION_PRICE:
         raise ApiError("Сумма или валюта платежа не совпадает с заказом.", 400)
+    if (payment.get("payment_method") or {}).get("type") != "sbp":
+        raise ApiError("Этот заказ должен быть оплачен через СБП.", 400)
     metadata = payment.get("metadata") or {}
     if metadata.get("order_id") != order_id:
         raise ApiError("Платёж не совпадает с заказом.", 400)
@@ -385,6 +391,11 @@ def activate_subscription(order_id, payment):
         if not row or row["payment_id"] != payment.get("id") or row["amount"] != SUBSCRIPTION_PRICE:
             raise ApiError("Заказ не найден или не совпадает с платежом.", 400)
         if row["status"] == "paid":
+            existing = db.execute("SELECT link_token FROM subscriptions WHERE telegram_user_id = ?", (int(row["telegram_user_id"]),)).fetchone()
+            if not existing:
+                raise ApiError("Подписка оплачена, но ссылка не найдена. Обратись в поддержку.", 500)
+            existing_link = PUBLIC_BASE_URL + "/s/" + str(existing["link_token"])
+            send_telegram_message(int(row["telegram_user_id"]), "Оплата Averiq VPN уже подтверждена. Твоя персональная ссылка:\n" + existing_link + "\n\nНе пересылай её другим людям.")
             return True
         user_id = int(row["telegram_user_id"])
         if str(metadata.get("telegram_user_id", "")) != str(user_id):
@@ -394,9 +405,9 @@ def activate_subscription(order_id, payment):
         expires_at = base + SUBSCRIPTION_DAYS * 86400
         db.execute("UPDATE orders SET status = 'paid', paid_at = ? WHERE order_id = ?", (now, order_id))
         db.execute(
-            "INSERT INTO subscriptions (telegram_user_id, expires_at, token_hash, updated_at) VALUES (?, ?, ?, ?) "
-            "ON CONFLICT(telegram_user_id) DO UPDATE SET expires_at=excluded.expires_at, token_hash=excluded.token_hash, updated_at=excluded.updated_at",
-            (user_id, expires_at, token_hash, now)
+            "INSERT INTO subscriptions (telegram_user_id, expires_at, token_hash, link_token, updated_at) VALUES (?, ?, ?, ?, ?) "
+            "ON CONFLICT(telegram_user_id) DO UPDATE SET expires_at=excluded.expires_at, token_hash=excluded.token_hash, link_token=excluded.link_token, updated_at=excluded.updated_at",
+            (user_id, expires_at, token_hash, raw_token, now)
         )
     link = PUBLIC_BASE_URL + "/s/" + raw_token
     send_telegram_message(user_id, "Оплата Averiq VPN подтверждена! Подписка активна 30 дней.\n\nТвоя персональная ссылка для конфигурации:\n" + link + "\n\nНе пересылай эту ссылку другим людям.")
@@ -442,15 +453,23 @@ def expire_subscriptions_loop():
             now = int(time.time())
             with sqlite3.connect(DB_PATH, timeout=15) as db:
                 rows = db.execute(
-                    "SELECT c.telegram_user_id, c.public_key FROM clients c "
+                    "SELECT c.telegram_user_id, c.public_key, c.client_ip FROM clients c "
                     "JOIN subscriptions s ON s.telegram_user_id = c.telegram_user_id "
                     "WHERE s.expires_at <= ?",
                     (now,)
                 ).fetchall()
-            for user_id, public_key in rows:
+            for user_id, public_key, client_ip in rows:
                 try:
                     checked_command(["wg", "set", WG_INTERFACE, "peer", public_key, "remove"])
                 except ApiError:
+                    pass
+                try:
+                    original = WG_CONFIG.read_text(encoding="utf-8")
+                    block = ("\n\n# Averiq Telegram user " + str(user_id) + "\n"
+                             "[Peer]\nPublicKey = " + public_key + "\nAllowedIPs = " + client_ip + "/32\n")
+                    if block in original:
+                        replace_config(original.replace(block, ""))
+                except (OSError, ApiError):
                     pass
         except Exception:
             pass
