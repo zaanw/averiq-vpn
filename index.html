@@ -133,7 +133,7 @@ button{cursor:pointer}
 
   <div class="price-summary"><div><div class="summary-label">Стоимость выбранного тарифа</div><div class="summary-caption" id="promoStatus">Промокод не применён</div></div><div class="summary-price" id="finalPrice">499 ₽</div></div>
   <button class="btn" id="continue" type="button">Открыть личный кабинет <span>→</span></button>
-  <div class="notice"><span>ⓘ</span><div><strong>Сейчас это демоверсия.</strong> Реальная оплата, скидки и VPN-серверы не подключены. Не отправляй деньги через эту страницу.</div></div>
+  <div class="notice"><span>ⓘ</span><div><strong>Требуется завершить настройку сервера.</strong> Пока API и HTTPS не подключены, оплата и выдача доступа не готовы. Не отправляй деньги через демоверсию.</div></div>
 </section>
 
 <section id="account" class="hidden">
@@ -171,6 +171,7 @@ button{cursor:pointer}
       <li>Открой файл в WireGuard и включи туннель.</li>
     </ol>
     <button class="btn btn-ghost" id="openWireGuard" type="button" style="margin-top:12px">Открыть WireGuard</button>
+    <button class="btn" id="getConfig" type="button" style="margin-top:8px">Получить конфигурацию</button>
   </div>
   <p class="note" id="message">После подтверждения платежа бот отправит персональный файл WireGuard. Файл содержит приватный ключ — не пересылай его другим людям.</p>
 </section>
@@ -266,6 +267,44 @@ $('pay').addEventListener('click',async()=>{
  }finally{
   button.disabled=false;
   button.textContent=oldText;
+ }
+});
+$('getConfig').addEventListener('click',async()=>{
+ const button=$('getConfig');
+ if(!tg?.initData){
+  const msg='Открой Averiq Mini App через Telegram.';
+  $('message').textContent=msg;
+  if(tg?.showAlert)tg.showAlert(msg);else toast(msg);
+  return;
+ }
+ if(!API_BASE){
+  const msg='API пока не подключён. Сначала заверши настройку HTTPS на сервере.';
+  $('message').textContent=msg;
+  if(tg?.showAlert)tg.showAlert(msg);else toast(msg);
+  return;
+ }
+ button.disabled=true;
+ button.textContent='Готовим конфигурацию…';
+ try{
+  const response=await fetch(API_BASE+'/api/wireguard/iphone',{
+   method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',
+   body:JSON.stringify({initData:tg.initData})
+  });
+  let result={};try{result=await response.json()}catch(_){}
+  if(!response.ok)throw new Error(result.error||'Не удалось получить конфигурацию.');
+  $('vpnStatus').textContent='Отправлена в Telegram';
+  $('vpnStatus').classList.remove('warning');
+  $('message').textContent=result.message||'Файл конфигурации отправлен в чат бота. Открой его в WireGuard и включи туннель.';
+  if(tg?.HapticFeedback)tg.HapticFeedback.notificationOccurred('success');
+  if(tg?.showAlert)tg.showAlert($('message').textContent);else toast('Конфигурация отправлена в Telegram');
+ }catch(error){
+  const msg=error?.message||'Не удалось подключиться к серверу.';
+  $('message').textContent=msg;
+  if(tg?.HapticFeedback)tg.HapticFeedback.notificationOccurred('error');
+  if(tg?.showAlert)tg.showAlert(msg);else toast(msg);
+ }finally{
+  button.disabled=false;
+  button.textContent='Получить конфигурацию';
  }
 });
 $('openWireGuard').addEventListener('click',()=>{
