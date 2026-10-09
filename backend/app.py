@@ -15,6 +15,8 @@ import sqlite3
 import subprocess
 import threading
 import time
+import base64
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qsl
@@ -27,6 +29,11 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN", "").strip()
 WG_INTERFACE = os.environ.get("WG_INTERFACE", "wg0")
 WG_ENDPOINT = os.environ.get("WG_ENDPOINT", "79.137.184.71").strip()
 WG_PORT = int(os.environ.get("WG_PORT", "51820"))
+YOOKASSA_SHOP_ID = os.environ.get("YOOKASSA_SHOP_ID", "").strip()
+YOOKASSA_SECRET_KEY = os.environ.get("YOOKASSA_SECRET_KEY", "").strip()
+PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "").strip().rstrip("/")
+SUBSCRIPTION_DAYS = 30
+SUBSCRIPTION_PRICE = "499.00"
 WG_CONFIG = Path(os.environ.get("WG_CONFIG", "/etc/wireguard/wg0.conf"))
 DB_PATH = Path(os.environ.get("DB_PATH", "/var/lib/averiq-api/clients.sqlite3"))
 MAX_INIT_AGE = int(os.environ.get("MAX_INIT_AGE", "86400"))
@@ -105,6 +112,25 @@ def init_db():
                     public_key TEXT NOT NULL UNIQUE,
                     client_ip TEXT NOT NULL UNIQUE,
                     created_at INTEGER NOT NULL
+                )
+            """)
+            db.execute("""
+                CREATE TABLE IF NOT EXISTS orders (
+                    order_id TEXT PRIMARY KEY,
+                    telegram_user_id INTEGER NOT NULL,
+                    payment_id TEXT UNIQUE,
+                    amount TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    paid_at INTEGER
+                )
+            """)
+            db.execute("""
+                CREATE TABLE IF NOT EXISTS subscriptions (
+                    telegram_user_id INTEGER PRIMARY KEY,
+                    expires_at INTEGER NOT NULL,
+                    token_hash TEXT NOT NULL UNIQUE,
+                    updated_at INTEGER NOT NULL
                 )
             """)
     finally:
@@ -276,6 +302,161 @@ def send_config_to_telegram(user_id, config_text):
         raise ApiError("Конфиг создан, но бот не смог отправить файл. Нажми Start в чате бота и повтори попытку.", 502)
 
 
+
+def yookassa_request(method, path, body=None, idempotence_key=None):
+    if not YOOKASSA_SHOP_ID or not YOOKASSA_SECRET_KEY:
+        raise ApiError("Оплата пока не настроена администратором.", 503)
+    raw = (YOOKASSA_SHOP_ID + ":" + YOOKASSA_SECRET_KEY).encode("utf-8")
+    auth = "Basic " + base64.b64encode(raw).decode("ascii")
+    data = json.dumps(body).encode("utf-8") if body is not None else None
+    headers = {"Authorization": auth, "Accept": "application/json"}
+    if data is not None:
+        headers["Content-Type"] = "application/json"
+    if idempotence_key:
+        headers["Idempotence-Key"] = idempotence_key
+    request = Request("https://api.yookassa.ru/v3" + path, data=data, headers=headers, method=method)
+    try:
+        with urlopen(request, timeout=20) as response:
+            return json.loads(response.read(1024 * 1024).decode("utf-8"))
+    except HTTPError as exc:
+        try:
+            detail = json.loads(exc.read(4096).decode("utf-8"))
+        except Exception:
+            detail = {}
+        raise ApiError("Платёжный сервис отклонил запрос: " + str(detail.get("description", "ошибка API")), 502) from None
+    except (URLError, TimeoutError, OSError, json.JSONDecodeError):
+        raise ApiError("Не удалось связаться с платёжным сервисом. Попробуй ещё раз.", 502) from None
+
+
+def create_payment(user_id):
+    if not PUBLIC_BASE_URL.startswith("https://"):
+        raise ApiError("Платёжная ссылка ещё не настроена: нужен публичный HTTPS-адрес Mini App.", 503)
+    order_id = str(uuid.uuid4())
+    payment = yookassa_request("POST", "/payments", {
+        "amount": {"value": SUBSCRIPTION_PRICE, "currency": "RUB"},
+        "payment_method_data": {"type": "sbp"},
+        "confirmation": {"type": "redirect", "return_url": PUBLIC_BASE_URL + "/?payment=return"},
+        "capture": True,
+        "description": "Averiq VPN — подписка на 30 дней",
+        "metadata": {"order_id": order_id, "telegram_user_id": str(user_id)}
+    }, idempotence_key=order_id)
+    confirmation_url = (payment.get("confirmation") or {}).get("confirmation_url")
+    payment_id = payment.get("id")
+    if not confirmation_url or not payment_id:
+        raise ApiError("Платёжный сервис не вернул ссылку оплаты.", 502)
+    with sqlite3.connect(DB_PATH, timeout=15) as db:
+        db.execute(
+            "INSERT INTO orders (order_id, telegram_user_id, payment_id, amount, status, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (order_id, user_id, payment_id, SUBSCRIPTION_PRICE, payment.get("status", "pending"), int(time.time()))
+        )
+    return {"ok": True, "order_id": order_id, "payment_url": confirmation_url}
+
+
+def send_telegram_message(user_id, message):
+    if not BOT_TOKEN:
+        return
+    body = json.dumps({"chat_id": user_id, "text": message, "disable_web_page_preview": True}).encode("utf-8")
+    request = Request("https://api.telegram.org/bot" + BOT_TOKEN + "/sendMessage", data=body,
+                      headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urlopen(request, timeout=15) as response:
+            result = json.loads(response.read(1024 * 1024).decode("utf-8"))
+        if not result.get("ok"):
+            raise ApiError("Telegram не доставил ссылку. Открой чат бота и нажми Start.", 502)
+    except (HTTPError, URLError, TimeoutError, OSError, json.JSONDecodeError):
+        raise ApiError("Оплата подтверждена, но Telegram не смог доставить ссылку. Обратись в поддержку.", 502) from None
+
+
+def activate_subscription(order_id, payment):
+    amount = payment.get("amount") or {}
+    if payment.get("status") != "succeeded" or payment.get("paid") is not True:
+        return False
+    if amount.get("currency") != "RUB" or amount.get("value") != SUBSCRIPTION_PRICE:
+        raise ApiError("Сумма или валюта платежа не совпадает с заказом.", 400)
+    metadata = payment.get("metadata") or {}
+    if metadata.get("order_id") != order_id:
+        raise ApiError("Платёж не совпадает с заказом.", 400)
+    now = int(time.time())
+    raw_token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+    with sqlite3.connect(DB_PATH, timeout=15) as db:
+        db.row_factory = sqlite3.Row
+        row = db.execute("SELECT telegram_user_id, payment_id, status, amount FROM orders WHERE order_id = ?", (order_id,)).fetchone()
+        if not row or row["payment_id"] != payment.get("id") or row["amount"] != SUBSCRIPTION_PRICE:
+            raise ApiError("Заказ не найден или не совпадает с платежом.", 400)
+        if row["status"] == "paid":
+            return True
+        user_id = int(row["telegram_user_id"])
+        if str(metadata.get("telegram_user_id", "")) != str(user_id):
+            raise ApiError("Платёж не совпадает с пользователем заказа.", 400)
+        current = db.execute("SELECT expires_at FROM subscriptions WHERE telegram_user_id = ?", (user_id,)).fetchone()
+        base = max(now, int(current["expires_at"])) if current else now
+        expires_at = base + SUBSCRIPTION_DAYS * 86400
+        db.execute("UPDATE orders SET status = 'paid', paid_at = ? WHERE order_id = ?", (now, order_id))
+        db.execute(
+            "INSERT INTO subscriptions (telegram_user_id, expires_at, token_hash, updated_at) VALUES (?, ?, ?, ?) "
+            "ON CONFLICT(telegram_user_id) DO UPDATE SET expires_at=excluded.expires_at, token_hash=excluded.token_hash, updated_at=excluded.updated_at",
+            (user_id, expires_at, token_hash, now)
+        )
+    link = PUBLIC_BASE_URL + "/s/" + raw_token
+    send_telegram_message(user_id, "Оплата Averiq VPN подтверждена! Подписка активна 30 дней.\n\nТвоя персональная ссылка для конфигурации:\n" + link + "\n\nНе пересылай эту ссылку другим людям.")
+    return True
+
+
+def process_yookassa_notification(payload):
+    if payload.get("event") != "payment.succeeded":
+        return
+    obj = payload.get("object") or {}
+    payment_id = str(obj.get("id", ""))
+    if not payment_id:
+        raise ApiError("В уведомлении отсутствует ID платежа.", 400)
+    payment = yookassa_request("GET", "/payments/" + payment_id)
+    metadata = payment.get("metadata") or {}
+    order_id = str(metadata.get("order_id", ""))
+    if not order_id:
+        raise ApiError("В платеже отсутствует ID заказа.", 400)
+    activate_subscription(order_id, payment)
+
+
+def get_active_subscription_by_token(token):
+    if not token or len(token) > 256:
+        return None
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    with sqlite3.connect(DB_PATH, timeout=15) as db:
+        db.row_factory = sqlite3.Row
+        row = db.execute("SELECT telegram_user_id, expires_at FROM subscriptions WHERE token_hash = ?", (token_hash,)).fetchone()
+    if not row or int(row["expires_at"]) <= int(time.time()):
+        return None
+    return int(row["telegram_user_id"])
+
+
+def has_active_subscription(user_id):
+    with sqlite3.connect(DB_PATH, timeout=15) as db:
+        row = db.execute("SELECT expires_at FROM subscriptions WHERE telegram_user_id = ?", (user_id,)).fetchone()
+    return bool(row and int(row[0]) > int(time.time()))
+
+
+def expire_subscriptions_loop():
+    while True:
+        try:
+            now = int(time.time())
+            with sqlite3.connect(DB_PATH, timeout=15) as db:
+                rows = db.execute(
+                    "SELECT c.telegram_user_id, c.public_key FROM clients c "
+                    "JOIN subscriptions s ON s.telegram_user_id = c.telegram_user_id "
+                    "WHERE s.expires_at <= ?",
+                    (now,)
+                ).fetchall()
+            for user_id, public_key in rows:
+                try:
+                    checked_command(["wg", "set", WG_INTERFACE, "peer", public_key, "remove"])
+                except ApiError:
+                    pass
+        except Exception:
+            pass
+        time.sleep(60)
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "AveriqAPI/1.0"
 
@@ -312,15 +493,50 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/health":
             self.write_json(200, {"ok": True}, self.headers.get("Origin", "").rstrip("/"))
-        else:
-            self.write_json(404, {"error": "Not found."})
+            return
+        if self.path.startswith("/s/"):
+            token = self.path[3:].split("?", 1)[0]
+            user_id = get_active_subscription_by_token(token)
+            if user_id is None:
+                self.send_error(410, "Ссылка недействительна или подписка закончилась.")
+                return
+            try:
+                config = create_or_get_client(user_id, "")
+                body = config.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/octet-stream")
+                self.send_header("Content-Disposition", 'attachment; filename="Averiq-WireGuard.conf"')
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("X-Content-Type-Options", "nosniff")
+                self.end_headers()
+                self.wfile.write(body)
+            except ApiError as exc:
+                self.send_error(exc.status, str(exc))
+            return
+        self.write_json(404, {"error": "Not found."})
 
     def do_POST(self):
+        if self.path == "/api/webhooks/yookassa":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                if length < 1 or length > 65536:
+                    raise ApiError("Некорректный размер уведомления.", 400)
+                payload = json.loads(self.rfile.read(length).decode("utf-8"))
+                process_yookassa_notification(payload)
+                self.write_json(200, {"ok": True})
+            except ApiError as exc:
+                self.write_json(exc.status, {"error": str(exc)})
+            except (ValueError, UnicodeDecodeError, json.JSONDecodeError):
+                self.write_json(400, {"error": "Некорректное уведомление."})
+            except Exception:
+                self.write_json(500, {"error": "Внутренняя ошибка обработки платежа."})
+            return
         origin = self.headers.get("Origin", "").rstrip("/")
         if origin not in ALLOWED_ORIGINS:
             self.write_json(403, {"error": "Источник запроса не разрешён."})
             return
-        if self.path != "/api/wireguard/iphone":
+        if self.path not in {"/api/wireguard/iphone", "/api/payments/create"}:
             self.write_json(404, {"error": "Not found."}, origin)
             return
         try:
@@ -329,11 +545,17 @@ class Handler(BaseHTTPRequestHandler):
                 raise ApiError("Некорректный размер запроса.", 400)
             payload = json.loads(self.rfile.read(length).decode("utf-8"))
             user_id, user = validate_init_data(str(payload.get("initData", "")))
+            if self.path == "/api/payments/create":
+                result = create_payment(user_id)
+                self.write_json(200, result, origin)
+                return
             if ALLOWED_TELEGRAM_IDS is not None and user_id not in ALLOWED_TELEGRAM_IDS:
                 raise ApiError(
                     f"Доступ пока не активирован. Твой Telegram ID: {user_id}. Передай его администратору.",
                     403
                 )
+            if not has_active_subscription(user_id):
+                raise ApiError("Сначала оформи подписку на 30 дней за 499 ₽.", 402)
             now = time.time()
             with LOCK:
                 previous = RECENT_REQUESTS.get(user_id, 0)
@@ -374,6 +596,7 @@ def main():
     if not WG_CONFIG.is_file():
         raise SystemExit(f"WireGuard config not found: {WG_CONFIG}")
     init_db()
+    threading.Thread(target=expire_subscriptions_loop, daemon=True).start()
     print(f"Averiq API listening on {HOST}:{PORT}; interface={WG_INTERFACE}", flush=True)
     ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()
 
