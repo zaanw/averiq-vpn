@@ -152,9 +152,9 @@ button{cursor:pointer}
     <div class="account-row"><strong>Промокод</strong><span id="chosenPromo">Не применён</span></div>
     <div class="account-row"><strong>VPN-конфигурация</strong><span id="vpnStatus" class="warning">Не создана</span></div>
   </div>
-  <button class="btn" id="connect" type="button" style="margin-top:14px">📱 Подключить iPhone</button>
+  <button class="btn" id="connect" type="button" style="margin-top:14px">📱 Подключить через Karing</button>
   <button class="btn btn-ghost" id="support" type="button" style="margin-top:9px">Открыть Telegram</button>
-  <p class="note" id="message">Персональный файл WireGuard придёт в этот чат Telegram. Оплата и автоматическая активация тарифов пока не подключены.</p>
+  <p class="note" id="message">Файл WireGuard придёт в чат этого бота. На iPhone открой файл и импортируй его в Karing. Оплата и автоматическая активация пока не подключены.</p>
 </section>
 <footer class="footer"><span class="footer-mark">✦</span> AVERIQ VPN <span>·</span> СДЕЛАНО С ЗАБОТОЙ</footer>
 </main>
@@ -164,7 +164,7 @@ const tg=window.Telegram?.WebApp;
 tg?.ready();tg?.expand();
 const API_BASE=(document.querySelector('meta[name="averiq-api-base"]')?.content||'').trim().replace(/\/$/,'');
 const $=id=>document.getElementById(id);
-const plans={'30':199,'60':299,'90':399,'365':599};
+const plans={'30':499,'60':299,'90':399,'365':599};
 const planNames={'30':'30 дней','60':'60 дней','90':'90 дней','365':'1 год'};
 const locations={fi:'🇫🇮 Финляндия · Хельсинки',de:'🇩🇪 Германия · Франкфурт',nl:'🇳🇱 Нидерланды · Амстердам',ch:'🇨🇭 Швейцария · Цюрих'};
 let promoApplied=false;
@@ -208,7 +208,7 @@ $('connect').addEventListener('click',async()=>{
   return;
  }
  button.disabled=true;
- button.textContent='Готовим конфигурацию…';
+ button.textContent='Готовим профиль Karing…';
  $('message').textContent='Проверяем доступ и создаём персональный WireGuard-профиль.';
  try{
   const response=await fetch(API_BASE+'/api/wireguard/iphone',{
@@ -222,9 +222,9 @@ $('connect').addEventListener('click',async()=>{
   if(!response.ok)throw new Error(result.error||'Не удалось выдать конфигурацию.');
   $('vpnStatus').textContent='Файл отправлен в Telegram';
   $('vpnStatus').classList.remove('warning');
-  $('message').textContent=result.message||'Проверь личный чат этого бота — там должен быть файл WireGuard.';
+  $('message').textContent=result.message||'Проверь личный чат этого бота — там будет файл Averiq-Karing.conf для импорта в Karing.';
   if(tg?.HapticFeedback)tg.HapticFeedback.notificationOccurred('success');
-  if(tg?.showAlert)tg.showAlert('Готово! Открой присланный файл Averiq-iPhone.conf и выбери WireGuard для импорта.');
+  if(tg?.showAlert)tg.showAlert('Готово! Открой присланный файл Averiq-Karing.conf на iPhone и импортируй его в Karing.');
   else toast('Конфиг отправлен в Telegram.');
  }catch(error){
   const msg=error?.message||'Не удалось подключиться к серверу.';
