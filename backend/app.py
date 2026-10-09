@@ -121,6 +121,7 @@ def init_db():
                     telegram_user_id INTEGER NOT NULL,
                     payment_id TEXT UNIQUE,
                     amount TEXT NOT NULL,
+                    client_app TEXT NOT NULL DEFAULT 'karing',
                     status TEXT NOT NULL,
                     created_at INTEGER NOT NULL,
                     paid_at INTEGER
@@ -132,12 +133,18 @@ def init_db():
                     expires_at INTEGER NOT NULL,
                     token_hash TEXT NOT NULL UNIQUE,
                     link_token TEXT NOT NULL,
+                    client_app TEXT NOT NULL DEFAULT 'karing',
                     updated_at INTEGER NOT NULL
                 )
             """)
             columns = {row[1] for row in db.execute("PRAGMA table_info(subscriptions)").fetchall()}
             if "link_token" not in columns:
                 db.execute("ALTER TABLE subscriptions ADD COLUMN link_token TEXT NOT NULL DEFAULT ''")
+            if "client_app" not in columns:
+                db.execute("ALTER TABLE subscriptions ADD COLUMN client_app TEXT NOT NULL DEFAULT 'karing'")
+            order_columns = {row[1] for row in db.execute("PRAGMA table_info(orders)").fetchall()}
+            if "client_app" not in order_columns:
+                db.execute("ALTER TABLE orders ADD COLUMN client_app TEXT NOT NULL DEFAULT 'karing'")
     finally:
         os.umask(old_umask)
     os.chmod(DB_PATH, 0o600)
@@ -333,7 +340,9 @@ def yookassa_request(method, path, body=None, idempotence_key=None):
         raise ApiError("Не удалось связаться с платёжным сервисом. Попробуй ещё раз.", 502) from None
 
 
-def create_payment(user_id):
+def create_payment(user_id, client_app):
+    if client_app not in {"karing", "wireguard"}:
+        raise ApiError("Выбери Karing или WireGuard.", 400)
     if not PUBLIC_BASE_URL.startswith("https://") or not MINI_APP_URL.startswith("https://"):
         raise ApiError("Оплата ещё не настроена: нужны публичные HTTPS-адреса API и Mini App.", 503)
     order_id = str(uuid.uuid4())
@@ -343,7 +352,7 @@ def create_payment(user_id):
         "confirmation": {"type": "redirect", "return_url": MINI_APP_URL + "/?payment=return"},
         "capture": True,
         "description": "Averiq VPN — подписка на 30 дней",
-        "metadata": {"order_id": order_id, "telegram_user_id": str(user_id)}
+        "metadata": {"order_id": order_id, "telegram_user_id": str(user_id), "client_app": client_app}
     }, idempotence_key=order_id)
     confirmation_url = (payment.get("confirmation") or {}).get("confirmation_url")
     payment_id = payment.get("id")
@@ -351,8 +360,8 @@ def create_payment(user_id):
         raise ApiError("Платёжный сервис не вернул ссылку оплаты.", 502)
     with sqlite3.connect(DB_PATH, timeout=15) as db:
         db.execute(
-            "INSERT INTO orders (order_id, telegram_user_id, payment_id, amount, status, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-            (order_id, user_id, payment_id, SUBSCRIPTION_PRICE, payment.get("status", "pending"), int(time.time()))
+            "INSERT INTO orders (order_id, telegram_user_id, payment_id, amount, client_app, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (order_id, user_id, payment_id, SUBSCRIPTION_PRICE, client_app, payment.get("status", "pending"), int(time.time()))
         )
     return {"ok": True, "order_id": order_id, "payment_url": confirmation_url}
 
@@ -388,15 +397,16 @@ def activate_subscription(order_id, payment):
     token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
     with sqlite3.connect(DB_PATH, timeout=15) as db:
         db.row_factory = sqlite3.Row
-        row = db.execute("SELECT telegram_user_id, payment_id, status, amount FROM orders WHERE order_id = ?", (order_id,)).fetchone()
+        row = db.execute("SELECT telegram_user_id, payment_id, status, amount, client_app FROM orders WHERE order_id = ?", (order_id,)).fetchone()
         if not row or row["payment_id"] != payment.get("id") or row["amount"] != SUBSCRIPTION_PRICE:
             raise ApiError("Заказ не найден или не совпадает с платежом.", 400)
         if row["status"] == "paid":
-            existing = db.execute("SELECT link_token FROM subscriptions WHERE telegram_user_id = ?", (int(row["telegram_user_id"]),)).fetchone()
+            existing = db.execute("SELECT link_token, client_app FROM subscriptions WHERE telegram_user_id = ?", (int(row["telegram_user_id"]),)).fetchone()
             if not existing:
                 raise ApiError("Подписка оплачена, но ссылка не найдена. Обратись в поддержку.", 500)
             existing_link = PUBLIC_BASE_URL + "/s/" + str(existing["link_token"])
-            send_telegram_message(int(row["telegram_user_id"]), "Оплата Averiq VPN уже подтверждена. Твоя персональная ссылка:\n" + existing_link + "\n\nНе пересылай её другим людям.")
+            app_name = "Karing" if existing["client_app"] == "karing" else "WireGuard"
+            send_telegram_message(int(row["telegram_user_id"]), "Оплата Averiq VPN уже подтверждена. Открой персональную ссылку и импортируй конфигурацию в " + app_name + ":\n" + existing_link + "\n\nНе пересылай её другим людям.")
             return True
         user_id = int(row["telegram_user_id"])
         if str(metadata.get("telegram_user_id", "")) != str(user_id):
@@ -406,12 +416,13 @@ def activate_subscription(order_id, payment):
         expires_at = base + SUBSCRIPTION_DAYS * 86400
         db.execute("UPDATE orders SET status = 'paid', paid_at = ? WHERE order_id = ?", (now, order_id))
         db.execute(
-            "INSERT INTO subscriptions (telegram_user_id, expires_at, token_hash, link_token, updated_at) VALUES (?, ?, ?, ?, ?) "
-            "ON CONFLICT(telegram_user_id) DO UPDATE SET expires_at=excluded.expires_at, token_hash=excluded.token_hash, link_token=excluded.link_token, updated_at=excluded.updated_at",
-            (user_id, expires_at, token_hash, raw_token, now)
+            "INSERT INTO subscriptions (telegram_user_id, expires_at, token_hash, link_token, client_app, updated_at) VALUES (?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(telegram_user_id) DO UPDATE SET expires_at=excluded.expires_at, token_hash=excluded.token_hash, link_token=excluded.link_token, client_app=excluded.client_app, updated_at=excluded.updated_at",
+            (user_id, expires_at, token_hash, raw_token, row["client_app"], now)
         )
     link = PUBLIC_BASE_URL + "/s/" + raw_token
-    send_telegram_message(user_id, "Оплата Averiq VPN подтверждена! Подписка активна 30 дней.\n\nТвоя персональная ссылка для конфигурации:\n" + link + "\n\nНе пересылай эту ссылку другим людям.")
+    app_name = "Karing" if row["client_app"] == "karing" else "WireGuard"
+    send_telegram_message(user_id, "Оплата Averiq VPN подтверждена! Подписка активна 30 дней.\n\nОткрой персональную ссылку и импортируй конфигурацию в " + app_name + ":\n" + link + "\n\nНе пересылай эту ссылку другим людям.")
     return True
 
 
@@ -436,10 +447,10 @@ def get_active_subscription_by_token(token):
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
     with sqlite3.connect(DB_PATH, timeout=15) as db:
         db.row_factory = sqlite3.Row
-        row = db.execute("SELECT telegram_user_id, expires_at FROM subscriptions WHERE token_hash = ?", (token_hash,)).fetchone()
+        row = db.execute("SELECT telegram_user_id, expires_at, client_app FROM subscriptions WHERE token_hash = ?", (token_hash,)).fetchone()
     if not row or int(row["expires_at"]) <= int(time.time()):
         return None
-    return int(row["telegram_user_id"])
+    return int(row["telegram_user_id"]), str(row["client_app"])
 
 
 def has_active_subscription(user_id):
@@ -516,16 +527,17 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path.startswith("/s/"):
             token = self.path[3:].split("?", 1)[0]
-            user_id = get_active_subscription_by_token(token)
-            if user_id is None:
+            subscription = get_active_subscription_by_token(token)
+            if subscription is None:
                 self.send_error(410, "Ссылка недействительна или подписка закончилась.")
                 return
+            user_id, client_app = subscription
             try:
                 config = create_or_get_client(user_id, "")
                 body = config.encode("utf-8")
                 self.send_response(200)
                 self.send_header("Content-Type", "application/octet-stream")
-                self.send_header("Content-Disposition", 'attachment; filename="Averiq-WireGuard.conf"')
+                self.send_header("Content-Disposition", 'attachment; filename="Averiq-Karing.conf"' if client_app == "karing" else 'attachment; filename="Averiq-WireGuard.conf"')
                 self.send_header("Content-Length", str(len(body)))
                 self.send_header("Cache-Control", "no-store")
                 self.send_header("X-Content-Type-Options", "nosniff")
@@ -566,7 +578,8 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(self.rfile.read(length).decode("utf-8"))
             user_id, user = validate_init_data(str(payload.get("initData", "")))
             if self.path == "/api/payments/create":
-                result = create_payment(user_id)
+                client_app = str(payload.get("clientApp", "karing")).strip().lower()
+                result = create_payment(user_id, client_app)
                 self.write_json(200, result, origin)
                 return
             if ALLOWED_TELEGRAM_IDS is not None and user_id not in ALLOWED_TELEGRAM_IDS:
