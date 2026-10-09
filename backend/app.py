@@ -174,10 +174,14 @@ def add_or_restore_live_peer(public_key, client_ip):
 
 def create_or_get_client(user_id, username):
     with LOCK:
+        # Read the server public key before changing any client state.
+        server_public = checked_command(["wg", "show", WG_INTERFACE, "public-key"])
         db = sqlite3.connect(DB_PATH, timeout=15)
-        original = None
-        added_to_config = False
+        original_config = None
+        config_changed = False
+        live_peer_added = False
         public_key = None
+        is_new_client = False
         try:
             db.execute("BEGIN IMMEDIATE")
             row = db.execute(
@@ -187,49 +191,54 @@ def create_or_get_client(user_id, username):
 
             if row:
                 private_key, public_key, client_ip = row
-                if public_key not in WG_CONFIG.read_text(encoding="utf-8"):
-                    original, added_to_config = append_peer_to_config(public_key, client_ip, user_id)
-                add_or_restore_live_peer(public_key, client_ip)
-                db.commit()
+                config_text = WG_CONFIG.read_text(encoding="utf-8")
+                if public_key not in config_text:
+                    original_config, config_changed = append_peer_to_config(public_key, client_ip, user_id)
+                live_peers = set(checked_command(["wg", "show", WG_INTERFACE, "peers"]).split())
+                if public_key not in live_peers:
+                    checked_command(["wg", "set", WG_INTERFACE, "peer", public_key,
+                                     "allowed-ips", client_ip + "/32"])
+                    live_peer_added = True
             else:
+                is_new_client = True
                 private_key = checked_command(["wg", "genkey"])
                 public_key = checked_command(["wg", "pubkey"], input_text=private_key + "\n")
                 client_ip = choose_client_ip(db)
                 checked_command(["wg", "set", WG_INTERFACE, "peer", public_key,
                                  "allowed-ips", client_ip + "/32"])
-                original, added_to_config = append_peer_to_config(public_key, client_ip, user_id)
+                live_peer_added = True
+                original_config, config_changed = append_peer_to_config(public_key, client_ip, user_id)
                 db.execute(
                     "INSERT INTO clients (telegram_user_id, username, private_key, public_key, client_ip, created_at) "
                     "VALUES (?, ?, ?, ?, ?, ?)",
                     (user_id, str(username or "")[:128], private_key, public_key, client_ip, int(time.time()))
                 )
-                db.commit()
 
-            server_public = checked_command(["wg", "show", WG_INTERFACE, "public-key"])
-            return (
-                "[Interface]\n"
-                f"PrivateKey = {private_key}\n"
-                f"Address = {client_ip}/32\n"
-                "DNS = 1.1.1.1, 1.0.0.1\n\n"
-                "[Peer]\n"
-                f"PublicKey = {server_public}\n"
-                f"Endpoint = {WG_ENDPOINT}:{WG_PORT}\n"
-                "AllowedIPs = 0.0.0.0/0, ::/0\n"
-                "PersistentKeepalive = 25\n"
-            )
+            db.commit()
         except Exception:
             db.rollback()
-            if public_key:
+            if live_peer_added and public_key:
                 try:
                     checked_command(["wg", "set", WG_INTERFACE, "peer", public_key, "remove"])
                 except ApiError:
                     pass
-            if added_to_config and original is not None:
-                replace_config(original)
+            if config_changed and original_config is not None:
+                replace_config(original_config)
             raise
         finally:
             db.close()
 
+        return (
+            "[Interface]\n"
+            f"PrivateKey = {private_key}\n"
+            f"Address = {client_ip}/32\n"
+            "DNS = 1.1.1.1, 1.0.0.1\n\n"
+            "[Peer]\n"
+            f"PublicKey = {server_public}\n"
+            f"Endpoint = {WG_ENDPOINT}:{WG_PORT}\n"
+            "AllowedIPs = 0.0.0.0/0, ::/0\n"
+            "PersistentKeepalive = 25\n"
+        )
 
 def send_config_to_telegram(user_id, config_text):
     boundary = "----Averiq" + secrets.token_hex(16)
