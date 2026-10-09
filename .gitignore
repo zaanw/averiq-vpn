@@ -1,0 +1,7 @@
+# Never commit tokens, generated WireGuard profiles, or local databases
+.env
+*.conf
+*.key
+*.sqlite3
+*.db
+__pycache__/
