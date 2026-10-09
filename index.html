@@ -8,45 +8,49 @@
 <title>Averiq VPN — личный кабинет</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{color-scheme:dark;--bg:#080a12;--panel:#101421;--panel2:#141a2a;--line:#272d43;--text:#f5f6ff;--muted:#8f98b2;--purple:#8b78ff;--cyan:#6be8dc;--green:#8ce9b2}
+:root{color-scheme:dark;--bg:#0e1117;--panel:#171b23;--panel2:#1d222c;--line:#303744;--text:#eef1f6;--muted:#9aa4b2;--purple:#8296ff;--cyan:#76cfc5;--green:#8ce9b2}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -12%,#393071 0,transparent 42%),radial-gradient(ellipse at 100% 48%,#102c3b 0,transparent 30%),var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 button,input{font:inherit}
 button{cursor:pointer}
 .app{width:min(100%,520px);margin:0 auto;padding:20px 18px 32px}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{display:flex;align-items:center;gap:11px;font-size:19px;font-weight:850;letter-spacing:-.5px}
-.brand-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:15px;background:linear-gradient(145deg,#a99cff,#6d5af4 62%,#46dacc);box-shadow:0 8px 28px #7664ff3b;color:#0a0b17;font-size:23px;font-weight:950}
+.brand-mark{width:38px;height:38px;display:grid;place-items:center;border-radius:10px;background:#8296ff;color:#101522;font-size:21px;font-weight:900}
 .brand em{font-style:normal;color:#a99aff}
-.status-pill{display:flex;align-items:center;gap:7px;border:1px solid #29423e;background:#12221f;color:#a8e9c8;padding:8px 10px;border-radius:30px;font-size:10px;font-weight:750;white-space:nowrap}
+.status-pill{display:flex;align-items:center;gap:7px;border:1px solid #3a414e;background:#1a2029;color:#b9c2d0;padding:8px 10px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap}
+.client-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.client-option{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:12px;padding:13px 10px;font-weight:800}
+.client-option.selected{border-color:var(--purple);background:#292344;box-shadow:inset 0 0 0 1px var(--purple)}
+.client-option:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .status-dot{width:6px;height:6px;border-radius:50%;background:#e9bb75;box-shadow:0 0 10px #e9bb7570}
 .hero{padding:31px 0 25px}
 .eyebrow{display:inline-flex;align-items:center;gap:7px;color:#b6adff;font-size:10px;font-weight:850;letter-spacing:1.7px;text-transform:uppercase}
 .hero h1{font-size:clamp(34px,8vw,43px);line-height:1.03;letter-spacing:-1.9px;margin:13px 0 13px;font-weight:900}
-.hero h1 span{background:linear-gradient(100deg,#b8adff,#7fdded);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1 span{color:#9caeff}
 .hero p{font-size:14px;line-height:1.65;color:#a4abc0;max-width:360px;margin:0}
-.hero-visual{position:relative;margin-top:23px;min-height:112px;overflow:hidden;border:1px solid #38345f;border-radius:23px;padding:18px;background:linear-gradient(110deg,#201c46,#151c32 60%,#10252f)}
-.hero-visual:after{content:"";position:absolute;width:155px;height:155px;right:-24px;top:-42px;border-radius:50%;border:1px solid #a49aff55;box-shadow:0 0 0 17px #a49aff0c,0 0 0 36px #a49aff08}
+.hero-visual{position:relative;margin-top:20px;min-height:105px;overflow:hidden;border:1px solid var(--line);border-radius:14px;padding:17px;background:#171c25}
+.hero-visual:after{content:"";position:absolute;width:100px;height:100px;right:-30px;top:-30px;border-radius:50%;border:1px solid #8296ff35}
 .visual-icon{width:43px;height:43px;border-radius:15px;background:#ffffff12;border:1px solid #ffffff20;display:grid;place-items:center;font-size:23px;margin-bottom:12px}
 .visual-title{font-weight:850;font-size:15px;position:relative;z-index:1}
 .visual-sub{font-size:11px;color:#b5bad0;margin-top:5px;position:relative;z-index:1}
 .section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:27px 0 12px}
 .section-name{font-size:15px;font-weight:850;letter-spacing:-.2px}
 .section-hint{font-size:10px;color:var(--muted)}
-.step{display:inline-grid;place-items:center;width:24px;height:24px;margin-right:8px;border:1px solid #46406d;border-radius:8px;background:#211d3e;color:#c2baff;font-size:11px;vertical-align:middle}
+.step{display:inline-grid;place-items:center;width:24px;height:24px;margin-right:8px;border:1px solid #3a4352;border-radius:6px;background:#202734;color:#b5c2ff;font-size:11px;vertical-align:middle}
 .locations{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.location{position:relative;display:flex;align-items:center;gap:11px;min-width:0;min-height:80px;padding:13px;border:1px solid var(--line);border-radius:17px;background:linear-gradient(145deg,#141927,#10131d);cursor:pointer;transition:border-color .18s,transform .18s,background .18s}
-.location:hover{transform:translateY(-1px)}
+.location{position:relative;display:flex;align-items:center;gap:11px;min-width:0;min-height:76px;padding:13px;border:1px solid var(--line);border-radius:12px;background:var(--panel);cursor:pointer;transition:border-color .18s,background .18s}
+.location:hover{border-color:#596579}
 .location input,.plan input{position:absolute;opacity:0;pointer-events:none}
-.location.selected,.plan.selected{border-color:#8271ff;background:linear-gradient(145deg,#211f40,#131827);box-shadow:inset 0 0 0 1px #8271ff22,0 8px 24px #00000018}
+.location.selected,.plan.selected{border-color:#8296ff;background:#202638;box-shadow:inset 0 0 0 1px #8296ff22}
 .flag{font-size:25px;filter:saturate(.9)}
 .loc-name{font-size:12px;font-weight:850;white-space:nowrap}
 .loc-city{font-size:10px;color:var(--muted);margin-top:5px}
 .checkmark{position:absolute;right:9px;top:9px;width:16px;height:16px;border-radius:50%;display:grid;place-items:center;background:#8b78ff;opacity:0}.checkmark:after{content:"";width:6px;height:3px;border-left:2px solid white;border-bottom:2px solid white;transform:rotate(-45deg) translate(1px,-1px)}
 .location.selected .checkmark{opacity:1}
 .plans{display:grid;gap:9px}
-.plan{display:flex;align-items:center;gap:12px;padding:15px;border:1px solid var(--line);border-radius:17px;background:linear-gradient(145deg,#141927,#10131d);cursor:pointer;transition:border-color .18s}
+.plan{display:flex;align-items:center;gap:12px;padding:15px;border:1px solid var(--line);border-radius:12px;background:var(--panel);cursor:pointer;transition:border-color .18s}
 .plan-radio{width:18px;height:18px;flex-shrink:0;border:1.5px solid #59617a;border-radius:50%;display:grid;place-items:center}
 .plan.selected .plan-radio{border-color:#9b8dff}
 .plan.selected .plan-radio:after{content:"";width:9px;height:9px;border-radius:50%;background:#9b8dff}
@@ -56,7 +60,7 @@ button{cursor:pointer}
 .price{font-size:18px;font-weight:900;letter-spacing:-.5px;white-space:nowrap}
 .price small{font-size:10px;color:var(--muted);font-weight:600}
 .tag{display:inline-block;margin-left:6px;padding:4px 6px;border-radius:6px;background:#18342d;color:#a5f0c9;font-size:8px;letter-spacing:.4px;vertical-align:2px}
-.promo-card{padding:16px;border:1px solid #40396e;border-radius:19px;background:linear-gradient(125deg,#201c40,#151a2b 72%,#12262d)}
+.promo-card{padding:16px;border:1px solid var(--line);border-radius:13px;background:var(--panel)}
 .promo-top{display:flex;align-items:center;gap:11px}
 .promo-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:#ffffff10;border:1px solid #ffffff13;font-size:21px}
 .promo-title{font-size:13px;font-weight:850}
@@ -64,8 +68,8 @@ button{cursor:pointer}
 .promo-form{display:flex;gap:8px;margin-top:14px}
 .input{width:100%;min-width:0;padding:13px 12px;color:var(--text);background:#0b0e18;border:1px solid #303650;border-radius:12px;outline:none;font-size:12px}
 .input:focus{border-color:#8b78ff;box-shadow:0 0 0 3px #8b78ff1c}
-.btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:15px 16px;border:0;border-radius:14px;background:linear-gradient(105deg,#9b88ff,#6f60ed);color:#fff;font-size:13px;font-weight:900;box-shadow:0 9px 24px #7463f52c;transition:transform .15s,filter .15s}
-.btn:hover{filter:brightness(1.07)}.btn:active{transform:scale(.99)}
+.btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 16px;border:0;border-radius:10px;background:#8296ff;color:#101522;font-size:13px;font-weight:800;box-shadow:none;transition:background .15s}
+.btn:hover{background:#9aabff}.btn:active{transform:scale(.99)}
 .btn-compact{width:auto;flex-shrink:0;padding:0 15px;box-shadow:none}
 .btn-ghost{background:#191f30;border:1px solid #30364c;box-shadow:none}
 .price-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 12px;padding:15px 2px;border-top:1px solid #272d40}
@@ -77,10 +81,10 @@ button{cursor:pointer}
 .notice span{font-size:14px}
 .hidden{display:none!important}
 .account-hero{text-align:center;padding:28px 0 20px}
-.account-symbol{width:82px;height:82px;margin:0 auto 17px;display:grid;place-items:center;border-radius:26px;background:linear-gradient(145deg,#a99cff,#6b5af1);box-shadow:0 0 40px #7664ff35;font-size:35px}
+.account-symbol{width:64px;height:64px;margin:0 auto 17px;display:grid;place-items:center;border-radius:16px;background:#222b40;border:1px solid #3a4967;color:#a9b8ff;font-size:30px}
 .account-hero h1{font-size:30px;letter-spacing:-1px;margin:0 0 9px}
 .account-hero p{font-size:12px;color:var(--muted);line-height:1.6;margin:0}
-.account-card{padding:17px;border:1px solid var(--line);border-radius:19px;background:linear-gradient(145deg,#151a29,#10131d)}
+.account-card{padding:17px;border:1px solid var(--line);border-radius:13px;background:var(--panel)}
 .account-row{display:flex;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px solid #272d3e;font-size:12px}
 .account-row:first-child{padding-top:0}.account-row:last-child{border:0;padding-bottom:0}
 .account-row strong{font-weight:800}.account-row span{color:#a0a9c0;text-align:right}
@@ -129,7 +133,7 @@ button{cursor:pointer}
 
   <div class="price-summary"><div><div class="summary-label">Стоимость выбранного тарифа</div><div class="summary-caption" id="promoStatus">Промокод не применён</div></div><div class="summary-price" id="finalPrice">499 ₽</div></div>
   <button class="btn" id="continue" type="button">Открыть личный кабинет <span>→</span></button>
-  <div class="notice"><span>ⓘ</span><div><strong>Сейчас это демоверсия.</strong> Реальная оплата, скидки и VPN-серверы не подключены. Не отправляй деньги через эту страницу.</div></div>
+  <div class="notice"><span>ⓘ</span><div><strong>Требуется завершить настройку сервера.</strong> Пока API и HTTPS не подключены, оплата и выдача доступа не готовы. Не отправляй деньги через демоверсию.</div></div>
 </section>
 
 <section id="account" class="hidden">
@@ -140,15 +144,36 @@ button{cursor:pointer}
     <p id="greeting">Управление Averiq VPN</p>
   </div>
   <div class="account-card">
-    <div class="account-row"><strong>Статус подписки</strong><span class="warning">Не активна</span></div>
+    <div class="account-row"><strong>Статус подписки</strong><span class="warning" id="subscriptionStatus">Не активна</span></div>
     <div class="account-row"><strong>Локация</strong><span id="chosenLocation">🇫🇮 Финляндия · Хельсинки</span></div>
     <div class="account-row"><strong>Тариф</strong><span id="chosenPlan">30 дней — 499 ₽</span></div>
     <div class="account-row"><strong>Промокод</strong><span id="chosenPromo">Не применён</span></div>
     <div class="account-row"><strong>VPN-конфигурация</strong><span id="vpnStatus" class="warning">Не создана</span></div>
   </div>
-  <button class="btn" id="connect" type="button" style="margin-top:14px">📱 Подключить через Karing</button>
+  <div class="account-card" style="margin-top:14px">
+    <strong style="display:block;margin-bottom:10px">Куда импортировать конфигурацию?</strong>
+    <div class="client-options" role="group" aria-label="Приложение для VPN">
+      <button class="client-option selected" id="clientKaring" type="button" aria-pressed="true">📱 Karing</button>
+      <button class="client-option" id="clientWireGuard" type="button" aria-pressed="false">🛡️ WireGuard</button>
+    </div>
+    <p class="note" style="margin-bottom:0">После подтверждения СБП бот пришлёт персональную ссылку на конфигурацию для выбранного приложения.</p>
+  </div>
+  <button class="btn" id="pay" type="button" style="margin-top:14px">💳 Оплатить 30 дней — 499 ₽ через СБП</button>
   <button class="btn btn-ghost" id="support" type="button" style="margin-top:9px">Открыть Telegram</button>
-  <p class="note" id="message">Файл WireGuard придёт в чат этого бота. На iPhone открой файл и импортируй его в Karing. Оплата и автоматическая активация пока не подключены.</p>
+  <div class="account-card wireguard-help" style="margin-top:14px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="width:34px;height:34px;display:grid;place-items:center;border-radius:9px;background:#222b40;color:#a9b8ff;font-size:18px">↗</div>
+      <div><strong style="display:block;font-size:13px">Подключение WireGuard</strong><span style="display:block;margin-top:3px;font-size:10px;color:var(--muted)">Три шага после активации</span></div>
+    </div>
+    <ol style="margin:0;padding-left:20px;color:#b4bdca;font-size:11px;line-height:1.8">
+      <li>Установи приложение WireGuard на устройстве.</li>
+      <li>Получи конфигурацию от бота Averiq VPN.</li>
+      <li>Открой файл в WireGuard и включи туннель.</li>
+    </ol>
+    <button class="btn btn-ghost" id="openWireGuard" type="button" style="margin-top:12px">Открыть WireGuard</button>
+    <button class="btn" id="getConfig" type="button" style="margin-top:8px">Получить конфигурацию</button>
+  </div>
+  <p class="note" id="message">После подтверждения платежа бот отправит персональный файл WireGuard. Файл содержит приватный ключ — не пересылай его другим людям.</p>
 </section>
 <footer class="footer"><span class="footer-mark">✦</span> AVERIQ VPN <span>·</span> СДЕЛАНО С ЗАБОТОЙ</footer>
 </main>
@@ -192,36 +217,50 @@ $('continue').addEventListener('click',()=>{
  tg?.HapticFeedback?.impactOccurred('light');
 });
 $('back').addEventListener('click',()=>{$('account').classList.add('hidden');$('home').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})});
-$('connect').addEventListener('click',async()=>{
- const button=$('connect');
+let selectedClient='karing';
+function chooseClient(client){
+ selectedClient=client;
+ $('clientKaring').classList.toggle('selected',client==='karing');
+ $('clientWireGuard').classList.toggle('selected',client==='wireguard');
+ $('clientKaring').setAttribute('aria-pressed',String(client==='karing'));
+ $('clientWireGuard').setAttribute('aria-pressed',String(client==='wireguard'));
+}
+$('clientKaring').addEventListener('click',()=>chooseClient('karing'));
+$('clientWireGuard').addEventListener('click',()=>chooseClient('wireguard'));
+$('pay').addEventListener('click',async()=>{
+ const button=$('pay');
  const oldText=button.textContent;
  if(!tg?.initData){
-  const msg='Открой Averiq Mini App через Telegram, чтобы подтвердить аккаунт.';
+  const msg='Открой Averiq Mini App через Telegram, чтобы создать заказ.';
+  $('message').textContent=msg;
+  if(tg?.showAlert)tg.showAlert(msg);else toast(msg);
+  return;
+ }
+ if(!API_BASE){
+  const msg='Сервер оплаты ещё не подключён к Mini App. Администратору нужно задать API URL после настройки HTTPS.';
   $('message').textContent=msg;
   if(tg?.showAlert)tg.showAlert(msg);else toast(msg);
   return;
  }
  button.disabled=true;
- button.textContent='Готовим профиль Karing…';
- $('message').textContent='Проверяем доступ и создаём персональный WireGuard-профиль.';
+ button.textContent='Создаём платёж…';
+ $('message').textContent='Создаём защищённую ссылку оплаты через СБП. Подписка активируется только после подтверждения платёжным сервисом.';
  try{
-  const response=await fetch(API_BASE+'/api/wireguard/iphone',{
+  const response=await fetch(API_BASE+'/api/payments/create',{
    method:'POST',
    headers:{'Content-Type':'application/json'},
    cache:'no-store',
-   body:JSON.stringify({initData:tg.initData})
+   body:JSON.stringify({initData:tg.initData,clientApp:selectedClient})
   });
   let result={};
   try{result=await response.json()}catch(_){}
-  if(!response.ok)throw new Error(result.error||'Не удалось выдать конфигурацию.');
-  $('vpnStatus').textContent='Файл отправлен в Telegram';
-  $('vpnStatus').classList.remove('warning');
-  $('message').textContent=result.message||'Проверь личный чат этого бота — там будет файл Averiq-Karing.conf для импорта в Karing.';
-  if(tg?.HapticFeedback)tg.HapticFeedback.notificationOccurred('success');
-  if(tg?.showAlert)tg.showAlert('Готово! Открой присланный файл Averiq-Karing.conf на iPhone и импортируй его в Karing.');
-  else toast('Конфиг отправлен в Telegram.');
+  if(!response.ok)throw new Error(result.error||'Не удалось создать платёж.');
+  if(!result.payment_url)throw new Error('Платёжный сервис не вернул ссылку оплаты.');
+  $('message').textContent='Перейди на страницу платёжного сервиса и подтверди оплату в приложении банка. Ключ придёт после подтверждения.';
+  if(tg?.openLink)tg.openLink(result.payment_url);
+  else window.location.href=result.payment_url;
  }catch(error){
-  const msg=error?.message||'Не удалось подключиться к серверу.';
+  const msg=error?.message||'Не удалось подключиться к платёжному сервису.';
   $('message').textContent=msg;
   if(tg?.HapticFeedback)tg.HapticFeedback.notificationOccurred('error');
   if(tg?.showAlert)tg.showAlert(msg);else toast(msg);
@@ -230,10 +269,72 @@ $('connect').addEventListener('click',async()=>{
   button.textContent=oldText;
  }
 });
+$('getConfig').addEventListener('click',async()=>{
+ const button=$('getConfig');
+ if(!tg?.initData){
+  const msg='Открой Averiq Mini App через Telegram.';
+  $('message').textContent=msg;
+  if(tg?.showAlert)tg.showAlert(msg);else toast(msg);
+  return;
+ }
+ if(!API_BASE){
+  const msg='API пока не подключён. Сначала заверши настройку HTTPS на сервере.';
+  $('message').textContent=msg;
+  if(tg?.showAlert)tg.showAlert(msg);else toast(msg);
+  return;
+ }
+ button.disabled=true;
+ button.textContent='Готовим конфигурацию…';
+ try{
+  const response=await fetch(API_BASE+'/api/wireguard/iphone',{
+   method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',
+   body:JSON.stringify({initData:tg.initData})
+  });
+  let result={};try{result=await response.json()}catch(_){}
+  if(!response.ok)throw new Error(result.error||'Не удалось получить конфигурацию.');
+  $('vpnStatus').textContent='Отправлена в Telegram';
+  $('vpnStatus').classList.remove('warning');
+  $('message').textContent=result.message||'Файл конфигурации отправлен в чат бота. Открой его в WireGuard и включи туннель.';
+  if(tg?.HapticFeedback)tg.HapticFeedback.notificationOccurred('success');
+  if(tg?.showAlert)tg.showAlert($('message').textContent);else toast('Конфигурация отправлена в Telegram');
+ }catch(error){
+  const msg=error?.message||'Не удалось подключиться к серверу.';
+  $('message').textContent=msg;
+  if(tg?.HapticFeedback)tg.HapticFeedback.notificationOccurred('error');
+  if(tg?.showAlert)tg.showAlert(msg);else toast(msg);
+ }finally{
+  button.disabled=false;
+  button.textContent='Получить конфигурацию';
+ }
+});
+$('openWireGuard').addEventListener('click',()=>{
+ const url='https://www.wireguard.com/install/';
+ if(tg?.openLink)tg.openLink(url);else window.open(url,'_blank','noopener');
+});
 $('support').addEventListener('click',()=>{
  if(tg)tg.openTelegramLink('https://t.me/');else toast('Открой приложение внутри Telegram, чтобы использовать функции Mini App.');
 });
+async function refreshSubscriptionStatus(){
+ if(!API_BASE||!tg?.initData)return;
+ try{
+  const response=await fetch(API_BASE+'/api/subscription/status',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   cache:'no-store',
+   body:JSON.stringify({initData:tg.initData})
+  });
+  if(!response.ok)return;
+  const result=await response.json();
+  if(result.active&&result.expiresAt){
+   $('subscriptionStatus').textContent='Активна до '+new Date(result.expiresAt*1000).toLocaleDateString('ru-RU');
+   $('subscriptionStatus').classList.remove('warning');
+   $('pay').textContent='Продлить на 30 дней — 499 ₽ через СБП';
+   $('message').textContent='Подписка активна. Персональная ссылка также доступна в личном чате этого бота.';
+  }
+ }catch(_){}
+}
 updateUI();
+refreshSubscriptionStatus();
 </script>
 </body>
 </html>
