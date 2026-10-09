@@ -140,15 +140,15 @@ button{cursor:pointer}
     <p id="greeting">Управление Averiq VPN</p>
   </div>
   <div class="account-card">
-    <div class="account-row"><strong>Статус подписки</strong><span class="warning">Не активна</span></div>
+    <div class="account-row"><strong>Статус подписки</strong><span class="warning" id="subscriptionStatus">Не активна</span></div>
     <div class="account-row"><strong>Локация</strong><span id="chosenLocation">🇫🇮 Финляндия · Хельсинки</span></div>
     <div class="account-row"><strong>Тариф</strong><span id="chosenPlan">30 дней — 499 ₽</span></div>
     <div class="account-row"><strong>Промокод</strong><span id="chosenPromo">Не применён</span></div>
     <div class="account-row"><strong>VPN-конфигурация</strong><span id="vpnStatus" class="warning">Не создана</span></div>
   </div>
-  <button class="btn" id="connect" type="button" style="margin-top:14px">📱 Подключить через Karing</button>
+  <button class="btn" id="pay" type="button" style="margin-top:14px">💳 Оплатить 30 дней — 499 ₽ через СБП</button>
   <button class="btn btn-ghost" id="support" type="button" style="margin-top:9px">Открыть Telegram</button>
-  <p class="note" id="message">Файл WireGuard придёт в чат этого бота. На iPhone открой файл и импортируй его в Karing. Оплата и автоматическая активация пока не подключены.</p>
+  <p class="note" id="message">После подтверждения платежа бот отправит персональную ссылку для получения WireGuard-конфигурации. Ссылку не пересылай другим людям.</p>
 </section>
 <footer class="footer"><span class="footer-mark">✦</span> AVERIQ VPN <span>·</span> СДЕЛАНО С ЗАБОТОЙ</footer>
 </main>
@@ -192,20 +192,26 @@ $('continue').addEventListener('click',()=>{
  tg?.HapticFeedback?.impactOccurred('light');
 });
 $('back').addEventListener('click',()=>{$('account').classList.add('hidden');$('home').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})});
-$('connect').addEventListener('click',async()=>{
- const button=$('connect');
+$('pay').addEventListener('click',async()=>{
+ const button=$('pay');
  const oldText=button.textContent;
  if(!tg?.initData){
-  const msg='Открой Averiq Mini App через Telegram, чтобы подтвердить аккаунт.';
+  const msg='Открой Averiq Mini App через Telegram, чтобы создать заказ.';
+  $('message').textContent=msg;
+  if(tg?.showAlert)tg.showAlert(msg);else toast(msg);
+  return;
+ }
+ if(!API_BASE){
+  const msg='Сервер оплаты ещё не подключён к Mini App. Администратору нужно задать API URL после настройки HTTPS.';
   $('message').textContent=msg;
   if(tg?.showAlert)tg.showAlert(msg);else toast(msg);
   return;
  }
  button.disabled=true;
- button.textContent='Готовим профиль Karing…';
- $('message').textContent='Проверяем доступ и создаём персональный WireGuard-профиль.';
+ button.textContent='Создаём платёж…';
+ $('message').textContent='Создаём защищённую ссылку оплаты через СБП. Подписка активируется только после подтверждения платёжным сервисом.';
  try{
-  const response=await fetch(API_BASE+'/api/wireguard/iphone',{
+  const response=await fetch(API_BASE+'/api/payments/create',{
    method:'POST',
    headers:{'Content-Type':'application/json'},
    cache:'no-store',
@@ -213,15 +219,13 @@ $('connect').addEventListener('click',async()=>{
   });
   let result={};
   try{result=await response.json()}catch(_){}
-  if(!response.ok)throw new Error(result.error||'Не удалось выдать конфигурацию.');
-  $('vpnStatus').textContent='Файл отправлен в Telegram';
-  $('vpnStatus').classList.remove('warning');
-  $('message').textContent=result.message||'Проверь личный чат этого бота — там будет файл Averiq-Karing.conf для импорта в Karing.';
-  if(tg?.HapticFeedback)tg.HapticFeedback.notificationOccurred('success');
-  if(tg?.showAlert)tg.showAlert('Готово! Открой присланный файл Averiq-Karing.conf на iPhone и импортируй его в Karing.');
-  else toast('Конфиг отправлен в Telegram.');
+  if(!response.ok)throw new Error(result.error||'Не удалось создать платёж.');
+  if(!result.payment_url)throw new Error('Платёжный сервис не вернул ссылку оплаты.');
+  $('message').textContent='Перейди на страницу платёжного сервиса и подтверди оплату в приложении банка. Ключ придёт после подтверждения.';
+  if(tg?.openLink)tg.openLink(result.payment_url);
+  else window.location.href=result.payment_url;
  }catch(error){
-  const msg=error?.message||'Не удалось подключиться к серверу.';
+  const msg=error?.message||'Не удалось подключиться к платёжному сервису.';
   $('message').textContent=msg;
   if(tg?.HapticFeedback)tg.HapticFeedback.notificationOccurred('error');
   if(tg?.showAlert)tg.showAlert(msg);else toast(msg);
