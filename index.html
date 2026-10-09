@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090b12">
+  <title>Averiq VPN</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090b12;
+      --panel: #121622;
+      --line: #262c3e;
+      --text: #f5f7ff;
+      --muted: #929bb3;
+      --blue: #7c6cff;
+      --cyan: #46e0d0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background:
+        radial-gradient(ellipse at 50% 0%, #22214b 0, transparent 48%),
+        var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+    .app { max-width: 480px; margin: auto; padding: 25px 18px 36px; }
+    .top { display:flex; justify-content:space-between; align-items:center; }
+    .brand { display:flex; align-items:center; gap:11px; font-weight:800; font-size:20px; }
+    .logo {
+      display:grid; place-items:center; width:43px; height:43px;
+      border-radius:15px; background:linear-gradient(135deg,var(--blue),var(--cyan));
+      color:#080c16; font-size:22px;
+    }
+    .pill {
+      color:var(--cyan); background:#12302f; border:1px solid #20504b;
+      padding:7px 10px; border-radius:30px; font-size:11px;
+    }
+    .hero { text-align:center; padding:38px 0 25px; }
+    .orb {
+      width:118px; height:118px; border-radius:50%; margin:0 auto 23px;
+      display:grid; place-items:center; font-size:49px;
+      background:radial-gradient(circle at 35% 25%,#a6a0ff,#6755e9 48%,#202c61 75%);
+      box-shadow:0 0 60px #7666ff38, inset 0 0 24px #ffffff25;
+    }
+    h1 { font-size:32px; letter-spacing:-1px; margin:0 0 12px; }
+    .sub { color:var(--muted); font-size:14px; line-height:1.6; max-width:320px; margin:auto; }
+    .section-title { font-size:17px; font-weight:750; margin:19px 0 13px; }
+    .card {
+      background:linear-gradient(145deg,#171c2b,#10131d);
+      border:1px solid var(--line); border-radius:20px; padding:18px; margin-bottom:12px;
+    }
+    .features { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:22px 0; }
+    .feature { background:#111622; border:1px solid #22283a; border-radius:15px; padding:14px 12px; }
+    .feature .emoji { font-size:20px; }
+    .feature strong { display:block; margin-top:8px; font-size:13px; }
+    .feature small { color:var(--muted); display:block; margin-top:5px; line-height:1.4; }
+    .plan { display:flex; align-items:center; gap:12px; cursor:pointer; }
+    .plan input { accent-color:var(--blue); width:18px; height:18px; }
+    .plan-info { flex:1; }
+    .plan-name { font-weight:700; }
+    .plan-desc { color:var(--muted); font-size:12px; margin-top:5px; }
+    .price { font-size:20px; font-weight:800; }
+    .selected { border-color:var(--blue); box-shadow:0 0 0 1px #7c6cff38; }
+    button {
+      width:100%; border:0; border-radius:15px; padding:16px;
+      font-size:15px; font-weight:800; cursor:pointer; color:white;
+      background:linear-gradient(100deg,var(--blue),#6557e8);
+    }
+    button.secondary { background:#1a2030; border:1px solid #30384e; margin-top:10px; }
+    .note { color:var(--muted); font-size:11px; text-align:center; line-height:1.6; margin:13px 5px 0; }
+    .status { display:flex; justify-content:space-between; gap:10px; font-size:13px; }
+    .status span { color:var(--muted); }
+    .hidden { display:none; }
+    .footer { color:#6e7892; text-align:center; font-size:11px; margin-top:27px; }
+    .back { width:auto; padding:9px 13px; margin:0 0 20px; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <div class="brand"><div class="logo">A</div> Averiq VPN</div>
+      <div class="pill">● SECURE ACCESS</div>
+    </header>
+
+    <section id="home">
+      <div class="hero">
+        <div class="orb">ϟ</div>
+        <h1>Твой интернет.<br>Твои правила.</h1>
+        <p class="sub">Приватность и защищённое соединение в одном месте.</p>
+      </div>
+
+      <div class="features">
+        <div class="feature"><div class="emoji">🛡️</div><strong>Защита соединения</strong><small>VPN после подключения сервера</small></div>
+        <div class="feature"><div class="emoji">⚡</div><strong>Быстрый доступ</strong><small>Удобное управление подпиской</small></div>
+        <div class="feature"><div class="emoji">🌍</div><strong>Выбор локации</strong><small>Доступность зависит от серверов</small></div>
+        <div class="feature"><div class="emoji">🔑</div><strong>Твой доступ</strong><small>Управление подпиской в Telegram</small></div>
+      </div>
+
+      <div class="section-title">Выбери тариф</div>
+      <label class="card plan selected" id="p7">
+        <input type="radio" name="plan" value="7" checked>
+        <div class="plan-info"><div class="plan-name">7 дней</div><div class="plan-desc">Попробовать сервис</div></div>
+        <div class="price">49 ₽</div>
+      </label>
+      <label class="card plan" id="p30">
+        <input type="radio" name="plan" value="30">
+        <div class="plan-info"><div class="plan-name">30 дней</div><div class="plan-desc">Полный месяц доступа</div></div>
+        <div class="price">129 ₽</div>
+      </label>
+
+      <button id="continue">Продолжить</button>
+      <p class="note">Пока доступен только демонстрационный интерфейс. Покупка и подключение VPN ещё не активны.</p>
+    </section>
+
+    <section id="account" class="hidden">
+      <button class="secondary back" id="back">← Назад к тарифам</button>
+      <div class="hero" style="padding-top:10px">
+        <div class="orb">🔐</div>
+        <h1>Твоя подписка</h1>
+        <p class="sub" id="greeting">Добро пожаловать в Averiq VPN</p>
+      </div>
+      <div class="card">
+        <div class="status"><strong>Статус</strong><span>Ожидает подключения сервера</span></div>
+        <hr style="border:0;border-top:1px solid #262c3e;margin:17px 0">
+        <div class="status"><strong>Выбранный тариф</strong><span id="chosen">7 дней — 49 ₽</span></div>
+        <hr style="border:0;border-top:1px solid #262c3e;margin:17px 0">
+        <div class="status"><strong>VPN-соединение</strong><span>Не подключено</span></div>
+      </div>
+      <button id="connect">Подготовить подключение</button>
+      <button class="secondary" id="support">Открыть Telegram</button>
+      <p class="note" id="message">Оплата не производится. Не отправляй деньги через эту демоверсию.</p>
+    </section>
+
+    <div class="footer">AVERIQ VPN · PRIVATE BY DESIGN</div>
+  </main>
+
+  <script>
+    const tg = window.Telegram?.WebApp;
+    tg?.ready();
+    tg?.expand();
+
+    const $ = id => document.getElementById(id);
+    const radios = [...document.querySelectorAll('input[name="plan"]')];
+
+    radios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        $('p7').classList.toggle('selected', radio.value === '7' && radio.checked);
+        $('p30').classList.toggle('selected', radio.value === '30' && radio.checked);
+      });
+    });
+
+    $('continue').addEventListener('click', () => {
+      const plan = radios.find(r => r.checked)?.value || '7';
+      $('chosen').textContent = plan === '30' ? '30 дней — 129 ₽' : '7 дней — 49 ₽';
+      const name = tg?.initDataUnsafe?.user?.first_name;
+      $('greeting').textContent = name ? `Привет, ${name}! Это твой кабинет Averiq VPN.` : 'Добро пожаловать в Averiq VPN';
+      $('home').classList.add('hidden');
+      $('account').classList.remove('hidden');
+      window.scrollTo(0, 0);
+      tg?.HapticFeedback?.impactOccurred('light');
+    });
+
+    $('back').addEventListener('click', () => {
+      $('account').classList.add('hidden');
+      $('home').classList.remove('hidden');
+      window.scrollTo(0, 0);
+    });
+
+    $('connect').addEventListener('click', () => {
+      $('message').textContent = 'Сервер и выдача конфигураций ещё не подключены. Сейчас соединиться с VPN нельзя.';
+      tg?.showAlert?.('Averiq VPN пока настраивается. Реальный VPN-сервер ещё не подключён.');
+    });
+
+    $('support').addEventListener('click', () => {
+      if (tg) {
+        tg.openTelegramLink('https://t.me/');
+      } else {
+        alert('Открой Averiq VPN внутри Telegram, чтобы использовать функции Mini App.');
+      }
+    });
+  </script>
+</body>
+</html>
