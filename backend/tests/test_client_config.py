@@ -27,6 +27,12 @@ class ClientConfigTests(unittest.TestCase):
         self.assertIn("AllowedIPs = 0.0.0.0/0\n", config)
         self.assertNotIn("::/0", config)
 
+    def test_github_pages_url_is_normalized_to_browser_origin(self):
+        self.assertEqual(
+            averiq_app.normalize_origin("https://zaanw.github.io/averiq-vpn"),
+            "https://zaanw.github.io",
+        )
+
     def test_profile_contains_endpoint_and_keepalive(self):
         config = averiq_app.build_client_config(
             private_key="test-client-private-key",
