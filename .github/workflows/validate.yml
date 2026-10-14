@@ -21,5 +21,7 @@ jobs:
           python-version: "3.x"
       - name: Compile Python API
         run: python -m py_compile backend/app.py
+      - name: Test client config generation
+        run: python -m unittest discover -s backend/tests -v
       - name: Check deployment script
         run: bash -n backend/deploy.sh
