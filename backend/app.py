@@ -17,7 +17,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qsl
+from urllib.parse import parse_qsl, urlsplit
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
@@ -30,7 +30,27 @@ WG_PORT = int(os.environ.get("WG_PORT", "51820"))
 WG_CONFIG = Path(os.environ.get("WG_CONFIG", "/etc/wireguard/wg0.conf"))
 DB_PATH = Path(os.environ.get("DB_PATH", "/var/lib/averiq-api/clients.sqlite3"))
 MAX_INIT_AGE = int(os.environ.get("MAX_INIT_AGE", "86400"))
-ALLOWED_ORIGINS = {item.strip().rstrip("/") for item in os.environ.get("ALLOWED_ORIGINS", "").split(",") if item.strip()}
+def normalize_origin(value):
+    """Normalize configured URLs to browser origins (scheme + host + port).
+
+    Browsers never include URL paths in the Origin header. This also allows a
+    GitHub Pages URL such as https://user.github.io/project to be configured
+    without accidentally causing every API request to fail CORS checks.
+    """
+    value = value.strip().rstrip("/")
+    if value == "*":
+        return value
+    parts = urlsplit(value)
+    if parts.scheme and parts.netloc:
+        return f"{parts.scheme}://{parts.netloc}"
+    return value
+
+
+ALLOWED_ORIGINS = {
+    normalize_origin(item)
+    for item in os.environ.get("ALLOWED_ORIGINS", "").split(",")
+    if item.strip()
+}
 ALLOWED_TELEGRAM_IDS_RAW = os.environ.get("ALLOWED_TELEGRAM_IDS", "").strip()
 ALLOWED_TELEGRAM_IDS = None if ALLOWED_TELEGRAM_IDS_RAW == "*" else {
     int(item.strip()) for item in ALLOWED_TELEGRAM_IDS_RAW.split(",") if item.strip().isdigit()
