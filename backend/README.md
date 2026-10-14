@@ -25,6 +25,8 @@
 Скрипт запросит:
 1. токен Telegram-бота (ввод скрыт; не вставляй его в GitHub или чат);
 2. точный HTTPS origin Mini App, например `https://example.com` — без пути и завершающего слеша;
+
+Сервис сравнивает именно origin (схема, домен и порт), потому что браузер не передаёт путь страницы в заголовке `Origin`. URL GitHub Pages вида `https://user.github.io/project` внутри API нормализуется до `https://user.github.io`.
 3. Telegram ID, которым разрешено получить конфиг;
 4. IP/домен WireGuard.
 
