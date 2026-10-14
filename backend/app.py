@@ -172,6 +172,21 @@ def add_or_restore_live_peer(public_key, client_ip):
                          "allowed-ips", client_ip + "/32"])
 
 
+def build_client_config(private_key, client_ip, server_public):
+    """Render a client profile for the server's currently configured IPv4-only tunnel."""
+    return (
+        "[Interface]\n"
+        f"PrivateKey = {private_key}\n"
+        f"Address = {client_ip}/32\n"
+        "DNS = 1.1.1.1, 1.0.0.1\n\n"
+        "[Peer]\n"
+        f"PublicKey = {server_public}\n"
+        f"Endpoint = {WG_ENDPOINT}:{WG_PORT}\n"
+        "AllowedIPs = 0.0.0.0/0\n"
+        "PersistentKeepalive = 25\n"
+    )
+
+
 def create_or_get_client(user_id, username):
     with LOCK:
         # Read the server public key before changing any client state.
@@ -228,17 +243,8 @@ def create_or_get_client(user_id, username):
         finally:
             db.close()
 
-        return (
-            "[Interface]\n"
-            f"PrivateKey = {private_key}\n"
-            f"Address = {client_ip}/32\n"
-            "DNS = 1.1.1.1, 1.0.0.1\n\n"
-            "[Peer]\n"
-            f"PublicKey = {server_public}\n"
-            f"Endpoint = {WG_ENDPOINT}:{WG_PORT}\n"
-            "AllowedIPs = 0.0.0.0/0, ::/0\n"
-            "PersistentKeepalive = 25\n"
-        )
+        return build_client_config(private_key, client_ip, server_public)
+
 
 def send_config_to_telegram(user_id, config_text):
     boundary = "----Averiq" + secrets.token_hex(16)
